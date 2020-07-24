@@ -12,21 +12,38 @@
     android:padding="8dp">
 
     <ImageView
-        android:id="@+id/icontextview"
+        android:id="@+id/filetransferimageview"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
 
         android:text="icon" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
     <TextView
-        android:id="@+id/nametextview"
+        android:id="@+id/filetransfernametextview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ellipsize="marquee"
         android:gravity="center"
-        android:textSize="18sp"
+        android:textSize="24sp"
         android:text="name" />
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/eachfileprogressbar"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+          />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="20/30"
+            android:id="@+id/showfileprogressscounttextview"
+            />
+    </LinearLayout>
 
 </LinearLayout>

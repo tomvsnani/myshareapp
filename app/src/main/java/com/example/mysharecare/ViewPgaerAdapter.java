@@ -27,7 +27,7 @@ SelectItemsToSendFragment fragment;
                 break;
             case 2:extra="audio";
                 break;
-            case 4:extra="others";
+            case 3:extra="others";
                 break;
         }
         SelectionCategoriesFragment selectionCategoriesFragment=new SelectionCategoriesFragment(extra,fragment);

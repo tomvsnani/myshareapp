@@ -24,7 +24,7 @@ import java.util.List;
 
 
 public class SelectItemsToSendFragment extends Fragment implements SelectionAdapter.SelectedItemsInterface {
- List<ModelClass> modelClassList=new ArrayList<>();
+    List<ModelClass> modelClassList = new ArrayList<>();
     List<InputStream> inputStreams = new ArrayList<>();
     MutableLiveData<List<InputStream>> listMutableLiveData = new MutableLiveData<>();
 
@@ -43,23 +43,27 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_select_items_to_send, container, false);
         sendButton = v.findViewById(R.id.sendtoActivitybutton);
-        viewPager2=v.findViewById(R.id.viewpager);
-        tableLayout=v.findViewById(R.id.tablayout);
+        viewPager2 = v.findViewById(R.id.viewpager);
+        tableLayout = v.findViewById(R.id.tablayout);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
         new TabLayoutMediator(tableLayout, viewPager2, new TabLayoutMediator.TabConfigurationStrategy() {
             @Override
             public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
                 Log.d("position", String.valueOf(position));
-                switch (position){
+                switch (position) {
 
-                    case 0:tab.setText("Apps");
-                    break;
-                    case 1:tab.setText("videos");
-                    break;
-                    case 2:tab.setText("Audio");
-                    break;
-                    case 3:tab.setText("others");
-                    break;
+                    case 0:
+                        tab.setText("Apps");
+                        break;
+                    case 1:
+                        tab.setText("videos");
+                        break;
+                    case 2:
+                        tab.setText("Audio");
+                        break;
+                    case 3:
+                        tab.setText("others");
+                        break;
                 }
 
             }
@@ -67,7 +71,6 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
 
         return v;
     }
-
 
 
     @Override
@@ -78,18 +81,23 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
 
 
     @Override
-    public void SelectedItemsCallback(ModelClass modelClass) {
-        Log.d("incall","yes");
-        modelClassList.add(modelClass);
-       sendButton.setOnClickListener(new View.OnClickListener() {
-           @Override
-           public void onClick(View view) {
-               Log.d("incallclick","yes");
-               Intent intent=new Intent(getActivity(),MainActivity.class);
+    public void SelectedItemsCallback(ModelClass modelClass, boolean addOrRemoveExtra) {
 
-               intent.putExtra("sendItems",(Serializable) modelClassList);
-               startActivity(intent);
-           }
-       });
+       if(addOrRemoveExtra)
+            modelClassList.add(modelClass);
+       else
+           modelClassList.remove(modelClass);
+
+      Log.d("typee", modelClass.getType()+modelClass.getLabel());
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+
+                intent.putExtra("sendItems", (Serializable) modelClassList);
+                startActivity(intent);
+            }
+        });
     }
 }

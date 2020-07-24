@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -21,6 +23,10 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -35,6 +41,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,7 +63,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,16 +74,18 @@ public class MainActivity extends AppCompatActivity {
     WifiBroadCast wifiBroadCast;
     Button findDevicesButton;
     Button wifiOnOffButton;
-    ListView devicesListView;
+    RecyclerView devicesListView;
     ArrayAdapter arrayAdapter;
 
     WifiP2pManager.ActionListener stopDiscovery;
     EditText messageTextView;
     WifiP2pManager.ActionListener connectDisconnectActionListener;
     Boolean isReceiver;
-    FrameLayout frameLayout;
+    ProgressBar progressBar;
     MutableLiveData<List<InputStream>> inputStreamList = new MutableLiveData<>();
     List<ModelClass> modelClassList = new ArrayList<>();
+    DevicesAdapter devicesAdapter;
+    FrameLayout frameLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,26 +97,132 @@ public class MainActivity extends AppCompatActivity {
         findDevicesButton = findViewById(R.id.finddevices);
         wifiOnOffButton = findViewById(R.id.wifionofftextview);
         devicesListView = findViewById(R.id.listview);
-        frameLayout = findViewById(R.id.framelayout);
+        progressBar = findViewById(R.id.datatransferprogressbar);
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
-        String extra = getIntent().getStringExtra(AppConstants.SENDRECEIVEEXTRA);
+        final String extra = getIntent().getStringExtra(AppConstants.SENDRECEIVEEXTRA);
         modelClassList = (List<ModelClass>) getIntent().getSerializableExtra("sendItems");
-        // Log.d("sizemodel", String.valueOf(modelClassList.size()));
+        frameLayout = findViewById(R.id.filetransferprogressframelayout);
+    Thread thread=new Thread(new Runnable() {
+        @Override
+        public void run() {
+            deletePersistentGroups();
 
-        if (extra != null && extra.equals(AppConstants.RECEIVE))
-            isReceiver = true;
-        else
-            isReceiver = false;
+            startDiscoveryDevices();
 
 
-        devicesListView.setAdapter(arrayAdapter);
+            if (extra != null && extra.equals(AppConstants.RECEIVE)) {
+                isReceiver = true;
+                startLocalService();
+
+
+            } else {
+                isReceiver = false;
+                startServiceDiscovery();
+            }
+        }
+    });
+    thread.start();
+
+
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
+        devicesAdapter = new DevicesAdapter(this);
+        devicesListView.setAdapter(devicesAdapter);
+        devicesListView.setLayoutManager(linearLayoutManager);
 
         messageTextView = findViewById(R.id.message);
 
-        startDiscoveryDevices();
 
         setupListeners();
 
+
+    }
+
+    private void startLocalService() {
+        Map<String, String> map = new HashMap<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            map.put("name", Settings.Global.getString(getContentResolver(), "device_name"));
+        } else map.put("name", Build.BRAND + Build.MODEL);
+        WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("_test", "_presence._tcp"
+                , map);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+        }
+        wifiP2pManager.addLocalService(channel, wifiP2pDnsSdServiceInfo, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("discoverlocalservice", "success");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("discoverlocalservice", "fail  " + i);
+            }
+        });
+
+    }
+
+    private void startServiceDiscovery() {
+        final String[] deviceNames = {"Android device"};
+        final List<WifiP2pDevice> wifiP2pDevices = new ArrayList<>();
+        wifiP2pManager.setDnsSdResponseListeners(channel, new WifiP2pManager.DnsSdServiceResponseListener() {
+            @Override
+            public void onDnsSdServiceAvailable(String s, String s1, WifiP2pDevice wifiP2pDevice) {
+                Log.d("discovertxtresponse", "success");
+                Log.d("discovertxtresponse", wifiP2pDevice.deviceAddress);
+                wifiP2pDevice.deviceName = deviceNames[0];
+                wifiP2pDevices.add(wifiP2pDevice);
+
+                devicesAdapter.submit(wifiP2pManager, wifiP2pDevices, channel, connectDisconnectActionListener);
+
+
+            }
+        }, new WifiP2pManager.DnsSdTxtRecordListener() {
+            @Override
+            public void onDnsSdTxtRecordAvailable(String s, Map<String, String> map, WifiP2pDevice wifiP2pDevice) {
+                Log.d("discovertxtrecord", "success");
+                Log.d("discovertexrecord", map.get("name"));
+                deviceNames[0] = (map.get("name"));
+            }
+        });
+        wifiP2pManager.addServiceRequest(channel, WifiP2pDnsSdServiceRequest.newInstance(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("discoverservicesrequest", "success");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("discoverservicesrequest", "fail " + i);
+            }
+        });
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+        }
+        wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("discoverservices", "success");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("discoverservices", "fail " + i);
+            }
+        });
 
     }
 
@@ -169,45 +286,15 @@ public class MainActivity extends AppCompatActivity {
                                                         }
                                                     });
 
-
-                                                    try {
-                                                        Log.d("size1", "f");
-
-                                                        final DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                                                        dataOutputStream.writeInt(modelClassList.size());
-                                                        Uri uri;
-                                                        for (ModelClass modelClass : modelClassList) {
-                                                            if (modelClass.getType().equals("app")) {
-                                                                uri = Uri.fromFile(new File(modelClass.getUri()));
-                                                            } else
-                                                                uri = Uri.parse(modelClass.getUri());
-
-                                                            Log.d("sizelength", String.valueOf(modelClass.getSize()));
-                                                            final DataInputStream e = new DataInputStream(getContentResolver().openInputStream(uri));
-                                                            Log.d("sizeuri", String.valueOf(uri));
-                                                            dataOutputStream.writeUTF(modelClass.getName());
-                                                            dataOutputStream.writeInt(modelClass.getSize().intValue());
-
-
-                                                            byte[] bytes = new byte[modelClass.getSize().intValue()];
-
-//                                                            dataOutputStream.writeUTF(modelClass.getName());
-                                                            e.readFully(bytes);
-                                                            dataOutputStream.write(bytes);
-                                                            dataOutputStream.flush();
-//
-//                                                            int i = 0;
-//                                                            while ((i = e.read(bytes,0,bytes.length)) != -1) {
-//                                                                Log.d("size1writing", String.valueOf(i));
-//                                                                dataOutputStream.write(bytes, 0, i);
-//
-//                                                            }
-
+                                                    frameLayout.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            frameLayout.setVisibility(View.VISIBLE);
                                                         }
-
-                                                    } catch (IOException e) {
-                                                        e.printStackTrace();
-                                                    }
+                                                    });
+                                                    getSupportFragmentManager().beginTransaction().
+                                                            replace(R.id.filetransferprogressframelayout,
+                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).commit();
 
                                                 } catch (IOException e) {
                                                     e.printStackTrace();
@@ -231,39 +318,16 @@ public class MainActivity extends AppCompatActivity {
                                                     List<String> strings = new ArrayList<>();
                                                     Socket socket = new Socket();
                                                     socket.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
+                                                    frameLayout.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            frameLayout.setVisibility(View.VISIBLE);
+                                                        }
+                                                    });
+                                                    getSupportFragmentManager().beginTransaction().
+                                                            replace(R.id.filetransferprogressframelayout,
+                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).commit();
 
-                                                    final DataInputStream e = new DataInputStream(socket.getInputStream());
-
-                                                    int numOfFiles = e.readInt();
-
-
-                                                    for (int i = 0; i < numOfFiles; i++) {
-
-                                                        String name = e.readUTF();
-                                                        Log.d("sizeapp", name);
-                                                        File file = new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
-                                                        file.createNewFile();
-                                                        FileOutputStream fileOutputStream = new FileOutputStream(file);
-                                                        int j = 0;
-                                                        int size = e.readInt();
-                                                        byte[] b = new byte[size];
-                                                        Log.d("sizeofapp", String.valueOf(size));
-
-
-                                                        findDevicesButton.post(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                findDevicesButton.setText("receiving");
-                                                            }
-                                                        });
-                                                        e.readFully(b);
-                                                        //      Log.d("size1receiving", String.valueOf(j/(1024.0*1024)));
-                                                        fileOutputStream.write(b);
-                                                        fileOutputStream.flush();
-
-                                                    }
-//
-//
 
                                                 } catch (IOException e) {
                                                     e.printStackTrace();
@@ -295,31 +359,6 @@ public class MainActivity extends AppCompatActivity {
                                 if (!isReceiver) {
                                     final List<WifiP2pDevice> wifiP2pDevices = new ArrayList<>(wifiP2pDeviceList.getDeviceList());
                                     List<WifiP2pDevice> wifiP2pDeviceLists = new ArrayList<>();
-                                    if (!wifiP2pDeviceLists.equals(wifiP2pDevices)) {
-                                        wifiP2pDeviceLists = wifiP2pDevices;
-                                        arrayAdapter.clear();
-                                        arrayAdapter.add(wifiP2pDeviceLists);
-                                        arrayAdapter.notifyDataSetChanged();
-
-                                        devicesListView.setOnItemClickListener(
-                                                new AdapterView.OnItemClickListener() {
-                                                    @Override
-                                                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                                                        Toast.makeText(MainActivity.this, "clicked", Toast.LENGTH_SHORT).show();
-                                                        WifiP2pDevice wifiP2pDevice = wifiP2pDevices.get(i);
-                                                        WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
-                                                        wifiP2pConfig.deviceAddress = wifiP2pDevice.deviceAddress;
-                                                        wifiP2pConfig.groupOwnerIntent = 15;
-                                                        wifiP2pConfig.wps.setup = WpsInfo.PBC;
-
-                                                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                                                            return;
-                                                        }
-                                                        wifiP2pManager.connect(channel, wifiP2pConfig, connectDisconnectActionListener);
-                                                    }
-                                                });
-                                    }
 
 
                                     if (wifiP2pDevices.size() == 0) {
@@ -394,16 +433,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    Intent intent = new Intent(Settings.Panel.ACTION_WIFI);
-                    startActivity(intent);
-                } else {
-                    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                    if (wifiManager.isWifiEnabled())
-                        wifiManager.setWifiEnabled(false);
-                    else
-                        wifiManager.setWifiEnabled(true);
-                }
+//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+//                    Intent intent = new Intent(Settings.Panel.ACTION_WIFI);
+//                    startActivity(intent);
+//                } else {
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                if (wifiManager.isWifiEnabled())
+                    wifiManager.setWifiEnabled(false);
+                else
+                    wifiManager.setWifiEnabled(true);
+                // }
 
             }
         });
@@ -455,7 +494,7 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             });
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

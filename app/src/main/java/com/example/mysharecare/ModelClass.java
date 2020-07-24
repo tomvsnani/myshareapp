@@ -8,9 +8,18 @@ import androidx.recyclerview.widget.DiffUtil;
 import java.io.Serializable;
 
 public class ModelClass implements Serializable {
-    private String name;
-    private String type;
-    private Long size;
+    private String name="";
+    private String type="";
+    private Long size=0L;
+    private int eachFileSize=0;
+
+    public int getEachFileSize() {
+        return eachFileSize;
+    }
+
+    public void setEachFileSize(int eachFileSize) {
+        this.eachFileSize = eachFileSize;
+    }
 
     public Long getSize() {
         return size;
@@ -37,7 +46,7 @@ public class ModelClass implements Serializable {
     }
 
     private transient Drawable label;
-    private String uri;
+    private String uri="";
 
     public  String getName() {
         return name;
