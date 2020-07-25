@@ -404,12 +404,13 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void setupListeners() {
+
+
         stopDiscovery = new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
 
             }
-
             @Override
             public void onFailure(int i) {
 
@@ -420,8 +421,8 @@ public class MainActivity extends AppCompatActivity {
         connectDisconnectActionListener = new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-            }
 
+            }
             @Override
             public void onFailure(int i) {
                 Toast.makeText(MainActivity.this, "connection fai " + i, Toast.LENGTH_SHORT).show();

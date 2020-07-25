@@ -3,6 +3,8 @@ package com.example.mysharecare;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,8 +52,7 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
     public void onBindViewHolder(@NonNull SendingFilesAdapter.SendingFilesViewHolder holder, int position) {
 
         ModelClass modelClass = getCurrentList().get(position);
-        if(modelClass.getType().equals("app"))
-        loadAppIcon(modelClass);
+
         int maxSize = (int) (modelClass.getSize() / (1024 * 1024));
         if (maxSize == 0) {
             holder.progressBar.setMax(1);
@@ -59,9 +60,9 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
 
         holder.nametextview.setText(modelClass.getName());
 
-        if(modelClass.getLabel()!=null)
+        if(modelClass.getBytes()!=null && modelClass.getBytes().length>0)
 
-        holder.iconimageview.setImageDrawable(modelClass.getLabel());
+            holder.iconimageview.setImageBitmap(getImageFromBytes(modelClass));
 
         if (progressValue.size() > 0)
             if (progressValue.containsKey(position)) {
@@ -86,13 +87,15 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
             }
 
     }
-
-    private void loadAppIcon(ModelClass modelClass) {
-        packageInfo=packageManager.getPackageArchiveInfo(modelClass.getUri(),0);
-        packageInfo.applicationInfo.publicSourceDir=modelClass.getUri();
-        packageInfo.applicationInfo.sourceDir=modelClass.getUri();
-        modelClass.setLabel(packageInfo.applicationInfo.loadIcon(packageManager));
+    private Bitmap getImageFromBytes(ModelClass modelClass) {
+        return BitmapFactory.decodeByteArray(modelClass.getBytes(),0,modelClass.getBytes().length);
     }
+//    private void loadAppIcon(ModelClass modelClass) {
+//        packageInfo=packageManager.getPackageArchiveInfo(modelClass.getUri(),0);
+//        packageInfo.applicationInfo.publicSourceDir=modelClass.getUri();
+//        packageInfo.applicationInfo.sourceDir=modelClass.getUri();
+//        modelClass.setLabel(packageInfo.applicationInfo.loadIcon(packageManager));
+//    }
 
     class SendingFilesViewHolder extends RecyclerView.ViewHolder {
         TextView nametextview;

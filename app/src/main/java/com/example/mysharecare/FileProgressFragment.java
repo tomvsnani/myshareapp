@@ -130,7 +130,7 @@ public class FileProgressFragment extends Fragment {
                 for (int i1 = 0; i1 < modelClassList.size(); i1++) {
 
                     ModelClass modelClass = modelClassList.get(i1);
-                    Log.d("filesend", modelClass.getName() + " " + modelClass.getSize() + " " + modelClass.getLabel());
+                   // Log.d("filesend", modelClass.getName() + " " + modelClass.getSize() + " " + modelClass.getLabel());
                     if (modelClass.getType().equals("app") || modelClass.getType().equals("others")) {
 
                         e = new DataInputStream(new FileInputStream(new File(modelClass.getUri())));

@@ -11,14 +11,14 @@ public class ModelClass implements Serializable {
     private String name="";
     private String type="";
     private Long size=0L;
-    private int eachFileSize=0;
+    private byte[] bytes;
 
-    public int getEachFileSize() {
-        return eachFileSize;
+    public byte[] getBytes() {
+        return bytes;
     }
 
-    public void setEachFileSize(int eachFileSize) {
-        this.eachFileSize = eachFileSize;
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
     }
 
     public Long getSize() {
@@ -45,7 +45,7 @@ public class ModelClass implements Serializable {
         this.uri = uri;
     }
 
-    private transient Drawable label;
+
     private String uri="";
 
     public  String getName() {
@@ -56,12 +56,6 @@ public class ModelClass implements Serializable {
         this.name = name;
     }
 
-    public  Drawable getLabel() {
-        return label;
-    }
 
-    public void setLabel(Drawable label) {
-        this.label = label;
-    }
 
 }

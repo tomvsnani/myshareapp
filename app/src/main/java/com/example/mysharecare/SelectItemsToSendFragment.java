@@ -88,7 +88,7 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
        else
            modelClassList.remove(modelClass);
 
-      Log.d("typee", modelClass.getType()+modelClass.getLabel());
+     // Log.d("typee", modelClass.getType()+modelClass.getLabel());
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

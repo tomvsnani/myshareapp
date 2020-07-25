@@ -6,6 +6,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -27,6 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -74,16 +79,23 @@ public class SelectionCategoriesFragment extends Fragment {
                             //   List<ResolveInfo> resolveInfos = getActivity().getPackageManager().queryIntentActivities(intent, 0);
                             List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
                             //   Collections.sort(applicationInfoList,new ApplicationInfo.DisplayNameComparator(getActivity().getPackageManager()));
-                            for (ApplicationInfo resolveInfo : applicationInfoList) {
+                            for (final ApplicationInfo resolveInfo : applicationInfoList) {
                                 if ((resolveInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
                                     continue;
                                 }
-                                ModelClass modelClass = new ModelClass();
+                                final ModelClass modelClass = new ModelClass();
                                 Log.d("position", resolveInfo.packageName);
                                 String s = resolveInfo.publicSourceDir;
                                 modelClass.setName(resolveInfo.loadLabel(getActivity().getPackageManager()).toString());
-                                modelClass.setLabel(resolveInfo.loadIcon(getActivity().getPackageManager()));
-                                modelClass.setUri(s);
+                                Thread thread1=new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(resolveInfo.loadIcon(getActivity().getPackageManager()))));
+
+                                    }
+                                });
+                                thread1.start();
+                                 modelClass.setUri(s);
                                 modelClass.setType(extra);
                                 modelClass.setSize(new File(resolveInfo.publicSourceDir).length());
                                 modelClassList.add(modelClass);
@@ -207,11 +219,11 @@ public class SelectionCategoriesFragment extends Fragment {
                         modelClass.setUri(g.getAbsolutePath());
                         modelClass.setSize(g.length());
                         if (!g.isFile())
-                            modelClass.setLabel(getActivity().getResources()
-                                    .getDrawable(R.drawable.ic_baseline_movie_filter_24));
+                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
+                                    .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
                         else {
-                            modelClass.setLabel(getActivity().getResources()
-                                    .getDrawable(R.drawable.ic_baseline_filter_vintage_24));
+                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
+                                    .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
                             modelClass.setType("others");
 
                            // Log.d("filesize", String.valueOf(g.length()));
@@ -249,6 +261,34 @@ public class SelectionCategoriesFragment extends Fragment {
 
             }
         });
+    }
+
+    private Bitmap getBitmapFromDrawable(Drawable drawable) {
+        int width = drawable.getIntrinsicWidth();
+        width = width > 0 ? width : 1;
+        int height = drawable.getIntrinsicHeight();
+        height = height > 0 ? height : 1;
+
+        Bitmap bitmap=Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(bitmap);
+        drawable.setBounds(0,0,canvas.getWidth(),canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
+    private byte[] getBytesFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG,100,byteArrayOutputStream);
+        bitmap.recycle();
+        byte[] bytes= byteArrayOutputStream.toByteArray();
+        try {
+            byteArrayOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bytes;
+
     }
 
 

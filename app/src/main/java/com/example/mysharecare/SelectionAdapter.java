@@ -2,7 +2,11 @@ package com.example.mysharecare;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
 import android.util.Log;
@@ -22,7 +26,9 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,9 +97,13 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
             holder.linearLayout.setBackgroundColor(Color.TRANSPARENT);
         }
         holder.nametextview.setText(modelClass.getName());
-        if (modelClass.getLabel() != null)
-            holder.iconimageview.setImageDrawable(modelClass.getLabel());
+        if (modelClass.getBytes() != null && modelClass.getBytes().length>0)
+            holder.iconimageview.setImageBitmap(getImageFromBytes(modelClass));
 
+    }
+
+    private Bitmap getImageFromBytes(ModelClass modelClass) {
+        return BitmapFactory.decodeByteArray(modelClass.getBytes(),0,modelClass.getBytes().length);
     }
 
     class SelectionViewHolder extends RecyclerView.ViewHolder {
@@ -124,11 +134,11 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     modelClass.setSize(g.length());
                                     Log.d("filesize", String.valueOf(g.length()));
                                     if (!g.isFile())
-                                        modelClass.setLabel(context.getResources()
-                                                .getDrawable(R.drawable.ic_baseline_movie_filter_24));
+                                        modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
+                                                .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
                                     else {
-                                        modelClass.setLabel(context.getResources()
-                                                .getDrawable(R.drawable.ic_baseline_filter_vintage_24));
+                                        modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
+                                                .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
                                         modelClass.setType("others");
 
                                         Log.d("filesize", String.valueOf(g.length()));
@@ -148,7 +158,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                         } else {
 
                             ModelClass modelClass = getCurrentList().get(getAdapterPosition());
-                            Log.d("positionn", modelClass.getName()+ modelClass.getType()+"  "+modelClass.getSize()+"  "+modelClass.getUri()+modelClass.getLabel());
+                      //      Log.d("positionn", modelClass.getName()+ modelClass.getType()+"  "+modelClass.getSize()+"  "+modelClass.getUri()+modelClass.getLabel());
                             selectedPosition.setValue(getAdapterPosition());
                             Toast.makeText(context, "selected", Toast.LENGTH_SHORT).show();
                         }
@@ -158,6 +168,34 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
             });
 
         }
+    }
+
+    private Bitmap getBitmapFromDrawable(Drawable drawable) {
+        int width = drawable.getIntrinsicWidth();
+        width = width > 0 ? width : 1;
+        int height = drawable.getIntrinsicHeight();
+        height = height > 0 ? height : 1;
+
+        Bitmap bitmap=Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(bitmap);
+        drawable.setBounds(0,0,canvas.getWidth(),canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
+    private byte[] getBytesFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG,100,byteArrayOutputStream);
+        bitmap.recycle();
+        byte[] bytes= byteArrayOutputStream.toByteArray();
+        try {
+            byteArrayOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bytes;
+
     }
 
     @Override
