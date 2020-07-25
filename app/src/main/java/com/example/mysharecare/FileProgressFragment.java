@@ -113,7 +113,7 @@ public class FileProgressFragment extends Fragment {
                 WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
                 final DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                ObjectOutputStream objectOutputStream=new ObjectOutputStream(socket.getOutputStream());
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                 objectOutputStream.writeObject(modelClassList);
                 dataOutputStream.writeInt(totalFilesSize);
                 Uri uri = null;
@@ -132,7 +132,7 @@ public class FileProgressFragment extends Fragment {
                 for (int i1 = 0; i1 < modelClassList.size(); i1++) {
 
                     ModelClass modelClass = modelClassList.get(i1);
-                   // Log.d("filesend", modelClass.getName() + " " + modelClass.getSize() + " " + modelClass.getLabel());
+                    // Log.d("filesend", modelClass.getName() + " " + modelClass.getSize() + " " + modelClass.getLabel());
                     if (modelClass.getType().equals("app") || modelClass.getType().equals("others")) {
 
                         dataInputStream = new DataInputStream(new FileInputStream(new File(modelClass.getUri())));
@@ -220,16 +220,15 @@ public class FileProgressFragment extends Fragment {
                     final Long startTime = System.nanoTime();
                     remainingFilesCounter = numOfFiles;
                     for (int i = 0; i < numOfFiles; i++) {
-                       ModelClass modelClass=modelClassList.get(i);
-                        File file=null;
+                        ModelClass modelClass = modelClassList.get(i);
+                        File file = null;
                         Log.d("filesend", "inreceiverloop");
                         String name = modelClass.getName();
                         String type = modelClass.getType();
                         Log.d("sizeapp", name);
-                        if(modelClass.getType().equals("app")) {
-                            file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name+".apk");
-                        }
-                        else
+                        if (modelClass.getType().equals("app")) {
+                            file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name + ".apk");
+                        } else
                             file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
 
                         file.createNewFile();
@@ -237,16 +236,25 @@ public class FileProgressFragment extends Fragment {
                         int j = 0;
                         int size = modelClass.getSize().intValue();
 
-
+                        int eachFileSize = 0;
                         byte[] b = new byte[8000];
                         Log.d("sizeofapp", String.valueOf(size));
                         while ((j = dataInputStream.read(b, 0, Math.min(b.length, size))) > 0) {
                             size = size - j;
                             fileSizeSent += j;
+                            eachFileSize += j;
                             progressBar.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     progressBar.setProgress(fileSizeSent);
+                                }
+                            });
+                            final int finalEachFileSize = eachFileSize;
+                            final int finalI = i;
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    sendingFilesAdapter.setProgress(finalI, finalEachFileSize);
                                 }
                             });
                             fileOutputStream.write(b, 0, j);
@@ -269,11 +277,11 @@ public class FileProgressFragment extends Fragment {
                     final Long stoptime = System.nanoTime();
                     final float time = (float) (((stoptime - startTime) * 0.1) / (1000 * 60));
                 }
-                } catch(IOException e){
-                    e.printStackTrace();
-                } catch(ClassNotFoundException e){
-                    e.printStackTrace();
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
 
         }
     }
