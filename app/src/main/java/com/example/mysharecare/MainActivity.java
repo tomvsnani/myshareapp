@@ -102,26 +102,26 @@ public class MainActivity extends AppCompatActivity {
         final String extra = getIntent().getStringExtra(AppConstants.SENDRECEIVEEXTRA);
         modelClassList = (List<ModelClass>) getIntent().getSerializableExtra("sendItems");
         frameLayout = findViewById(R.id.filetransferprogressframelayout);
-    Thread thread=new Thread(new Runnable() {
-        @Override
-        public void run() {
-            deletePersistentGroups();
-
-            startDiscoveryDevices();
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
 
 
-            if (extra != null && extra.equals(AppConstants.RECEIVE)) {
-                isReceiver = true;
-                startLocalService();
+                startDiscoveryDevices();
 
 
-            } else {
-                isReceiver = false;
-                startServiceDiscovery();
+                if (extra != null && extra.equals(AppConstants.RECEIVE)) {
+                    isReceiver = true;
+                    startLocalService();
+
+
+                } else {
+                    isReceiver = false;
+                    startServiceDiscovery();
+                }
             }
-        }
-    });
-    thread.start();
+        });
+        thread.start();
 
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
@@ -138,6 +138,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startLocalService() {
+        wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                addlocalservice();
+            }
+
+            @Override
+            public void onFailure(int i) {
+                addlocalservice();
+            }
+        });
+
+
+    }
+
+    private void addlocalservice() {
         Map<String, String> map = new HashMap<>();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             map.put("name", Settings.Global.getString(getContentResolver(), "device_name"));
@@ -158,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess() {
                 Log.d("discoverlocalservice", "success");
+
             }
 
             @Override
@@ -165,10 +182,25 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("discoverlocalservice", "fail  " + i);
             }
         });
-
     }
 
     private void startServiceDiscovery() {
+        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                addServiceRequest();
+            }
+
+            @Override
+            public void onFailure(int i) {
+                addServiceRequest();
+            }
+        });
+
+
+    }
+
+    private void addServiceRequest() {
         final String[] deviceNames = {"Android device"};
         final List<WifiP2pDevice> wifiP2pDevices = new ArrayList<>();
         wifiP2pManager.setDnsSdResponseListeners(channel, new WifiP2pManager.DnsSdServiceResponseListener() {
@@ -194,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
         wifiP2pManager.addServiceRequest(channel, WifiP2pDnsSdServiceRequest.newInstance(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
+               // startDiscoveryDevices();
                 Log.d("discoverservicesrequest", "success");
             }
 
@@ -223,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("discoverservices", "fail " + i);
             }
         });
-
     }
 
 
@@ -294,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
                                                     });
                                                     getSupportFragmentManager().beginTransaction().
                                                             replace(R.id.filetransferprogressframelayout,
-                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).commit();
+                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
 
                                                 } catch (IOException e) {
                                                     e.printStackTrace();
@@ -326,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                                                     });
                                                     getSupportFragmentManager().beginTransaction().
                                                             replace(R.id.filetransferprogressframelayout,
-                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).commit();
+                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
 
 
                                                 } catch (IOException e) {
@@ -339,6 +371,9 @@ public class MainActivity extends AppCompatActivity {
 
                                 }
                             });
+                        }
+                        if(networkInfo!=null && !networkInfo.isConnected()){
+                            deletePersistentGroups();
                         }
 
                     }
@@ -363,8 +398,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     if (wifiP2pDevices.size() == 0) {
                                         Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
-                                        arrayAdapter.clear();
-                                        arrayAdapter.notifyDataSetChanged();
+
                                     }
                                 }
                                 if (isReceiver)
@@ -389,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                             findDevicesButton.setText("Discovery stopped . start Discovery ?");
-                            Toast.makeText(context, "Discovery Stopped", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Discovery Stopped ", Toast.LENGTH_SHORT).show();
                         }
 
                     }
@@ -406,23 +440,12 @@ public class MainActivity extends AppCompatActivity {
     private void setupListeners() {
 
 
-        stopDiscovery = new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-
-            }
-            @Override
-            public void onFailure(int i) {
-
-
-            }
-        };
-
         connectDisconnectActionListener = new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
 
             }
+
             @Override
             public void onFailure(int i) {
                 Toast.makeText(MainActivity.this, "connection fai " + i, Toast.LENGTH_SHORT).show();
@@ -463,41 +486,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deletePersistentGroups() {
-        try {
-            Method[] methods = WifiP2pManager.class.getMethods();
-            for (Method method : methods) {
-                if (method.getName().equals("deletePersistentGroup")) {
-                    // Delete any persistent group
-                    for (int netid = 0; netid < 32; netid++) {
-                        method.invoke(wifiP2pManager, channel, netid, null);
-                    }
-                }
-            }
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                return;
-            }
-            wifiP2pManager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
-                @Override
-                public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
-
-                    wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(MainActivity.this, "disconnected", Toast.LENGTH_SHORT).show();
+        Thread thread=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Method[] methods = WifiP2pManager.class.getMethods();
+                    for (Method method : methods) {
+                        if (method.getName().equals("deletePersistentGroup")) {
+                            // Delete any persistent group
+                            for (int netid = 0; netid < 32; netid++) {
+                                method.invoke(wifiP2pManager, channel, netid, null);
+                            }
                         }
+                    }
 
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                        return;
+                    }
+                    wifiP2pManager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
                         @Override
-                        public void onFailure(int i) {
+                        public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
 
+                            wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(MainActivity.this, "group removed", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onFailure(int i) {
+                                    startDiscoveryDevices();
+                                    Toast.makeText(MainActivity.this, "unable to remove group", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     });
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            }
+        });
+        thread.start();
     }
 
     private void startDiscoveryDevices() {
@@ -509,7 +539,28 @@ public class MainActivity extends AppCompatActivity {
             }
             return;
         }
-        wifiP2pManager.discoverPeers(channel, stopDiscovery);
+        wifiP2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onFailure(int i) {
+
+                wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        startDiscoveryDevices();
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        startDiscoveryDevices();
+                    }
+                });
+            }
+        });
 //        if (findDevicesButton.getText().toString().contains("started") || findDevicesButton.getText().toString().contains("STARTED")) {
 //            wifiP2pManager.stopPeerDiscovery(channel, stopDiscovery);
 //            wifiP2pManager.cancelConnect(channel, connectDisconnectActionListener);

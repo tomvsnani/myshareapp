@@ -32,9 +32,10 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
     WifiP2pManager wifiP2pManager;
     WifiP2pManager.Channel channel;
     WifiP2pManager.ActionListener actionListene;
+
     protected DevicesAdapter(Context context) {
         super(wifiP2pDeviceItemCallback);
-        this.context=context;
+        this.context = context;
     }
 
     @NonNull
@@ -45,25 +46,24 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
 
     @Override
     public void onBindViewHolder(@NonNull DeviceViewHolder holder, int position) {
-       WifiP2pDevice listModel = getCurrentList().get(position);
+        WifiP2pDevice listModel = getCurrentList().get(position);
         holder.textView.setText(listModel.deviceName);
         holder.imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_baseline_phone_android_24));
     }
 
 
     public void submit(WifiP2pManager wifiP2pManager,
-                       List<WifiP2pDevice> listModels, WifiP2pManager.Channel channel, WifiP2pManager.ActionListener actionListene)
-    {
-        this.wifiP2pManager=wifiP2pManager;
-        this.channel=channel;
-        this.actionListene=actionListene;
+                       List<WifiP2pDevice> listModels, WifiP2pManager.Channel channel, WifiP2pManager.ActionListener actionListene) {
+        this.wifiP2pManager = wifiP2pManager;
+        this.channel = channel;
+        this.actionListene = actionListene;
         submitList(listModels);
         Log.d("adaptersize", String.valueOf(getCurrentList().size()));
     }
 
     @Override
     public void submitList(@Nullable List<WifiP2pDevice> list) {
-        super.submitList(list==null?null:new ArrayList<WifiP2pDevice>(list));
+        super.submitList(list == null ? null : new ArrayList<WifiP2pDevice>(list));
     }
 
     class DeviceViewHolder extends RecyclerView.ViewHolder {
@@ -75,35 +75,57 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
             super(itemView);
             textView = itemView.findViewById(R.id.nametextview);
             imageView = itemView.findViewById(R.id.icontextview);
-            linearLayout=itemView.findViewById(R.id.idlinear);
+            linearLayout = itemView.findViewById(R.id.idlinear);
+            linearLayout.setClickable(true);
             linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     Toast.makeText(context, "clicked", Toast.LENGTH_SHORT).show();
-                    WifiP2pDevice wifiP2pDevice =getCurrentList().get(getAdapterPosition());
-                    WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
-                    wifiP2pConfig.deviceAddress = wifiP2pDevice.deviceAddress;
-                    wifiP2pConfig.groupOwnerIntent = 15;
-                    wifiP2pConfig.wps.setup = WpsInfo.PBC;
-
-                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                        return;
+                    final WifiP2pDevice wifiP2pDevice = getCurrentList().get(getAdapterPosition());
+                    if (wifiP2pDevice.status == WifiP2pDevice.CONNECTED) {
+                        linearLayout.setClickable(false);
                     }
-                    wifiP2pManager.connect(channel, wifiP2pConfig, actionListene);
+
+                    if (wifiP2pDevice.status == WifiP2pDevice.FAILED) {
+                        wifiP2pManager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+                            @Override
+                            public void onSuccess() {
+                                connectToDevice(wifiP2pDevice);
+                            }
+
+                            @Override
+                            public void onFailure(int i) {
+
+                            }
+                        });
+                    }
+                    connectToDevice(wifiP2pDevice);
                 }
             });
         }
+    }
+
+    private void connectToDevice(WifiP2pDevice wifiP2pDevice) {
+        WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
+        wifiP2pConfig.deviceAddress = wifiP2pDevice.deviceAddress;
+        wifiP2pConfig.groupOwnerIntent = 15;
+        wifiP2pConfig.wps.setup = WpsInfo.PBC;
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            return;
+        }
+        wifiP2pManager.connect(channel, wifiP2pConfig, actionListene);
     }
 
     @Override
     public int getItemCount() {
         Log.d("adaptersizee", "one");
         Log.d("adaptersizee", String.valueOf(getCurrentList().size()));
-        return Math.max(0,getCurrentList().size());
+        return Math.max(0, getCurrentList().size());
     }
 
-  static  DiffUtil.ItemCallback<WifiP2pDevice> wifiP2pDeviceItemCallback=new DiffUtil.ItemCallback<WifiP2pDevice>() {
+    static DiffUtil.ItemCallback<WifiP2pDevice> wifiP2pDeviceItemCallback = new DiffUtil.ItemCallback<WifiP2pDevice>() {
         @Override
         public boolean areItemsTheSame(@NonNull WifiP2pDevice oldItem, @NonNull WifiP2pDevice newItem) {
             return areItemsSame(oldItem, newItem);
@@ -115,11 +137,9 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
         }
     };
 
-  static  public boolean areItemsSame(WifiP2pDevice oldItem,WifiP2pDevice newItem)
-
-    {
-        if(oldItem!=null && newItem!=null)
-      return   oldItem.deviceName.equals(newItem.deviceName) && oldItem.deviceAddress.equals(newItem.deviceName);
+    static public boolean areItemsSame(WifiP2pDevice oldItem, WifiP2pDevice newItem) {
+        if (oldItem != null && newItem != null)
+            return oldItem.deviceName.equals(newItem.deviceName) && oldItem.deviceAddress.equals(newItem.deviceName);
         return true;
     }
 
