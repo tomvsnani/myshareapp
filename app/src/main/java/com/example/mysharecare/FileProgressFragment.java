@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
 
@@ -109,13 +111,13 @@ public class FileProgressFragment extends Fragment {
             try {
 
                 WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 
                 final DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                dataOutputStream.writeInt(modelClassList.size());
+                ObjectOutputStream objectOutputStream=new ObjectOutputStream(socket.getOutputStream());
+                objectOutputStream.writeObject(modelClassList);
                 dataOutputStream.writeInt(totalFilesSize);
                 Uri uri = null;
-                DataInputStream e;
+                DataInputStream dataInputStream;
                 final Long startTime = System.nanoTime();
                 remainingFilesCounter = modelClassList.size();
 
@@ -133,31 +135,24 @@ public class FileProgressFragment extends Fragment {
                    // Log.d("filesend", modelClass.getName() + " " + modelClass.getSize() + " " + modelClass.getLabel());
                     if (modelClass.getType().equals("app") || modelClass.getType().equals("others")) {
 
-                        e = new DataInputStream(new FileInputStream(new File(modelClass.getUri())));
-                        if (modelClass.getType().equals("app"))
-                            dataOutputStream.writeUTF(modelClass.getName() + ".apk");
-                        else
-                            dataOutputStream.writeUTF(modelClass.getName());
-
+                        dataInputStream = new DataInputStream(new FileInputStream(new File(modelClass.getUri())));
 
 
                     } else {
 
                         uri = Uri.parse(modelClass.getUri());
-                        e = new DataInputStream(getActivity().getContentResolver().openInputStream(uri));
-                        dataOutputStream.writeUTF(modelClass.getName());
-                    }
-                    dataOutputStream.writeUTF(modelClass.getType());
-                    int filesize = modelClass.getSize().intValue();
-                    dataOutputStream.writeInt(filesize);
+                        dataInputStream = new DataInputStream(getActivity().getContentResolver().openInputStream(uri));
 
+                    }
+
+                    int filesize = modelClass.getSize().intValue();
 
                     byte[] bytes = new byte[8000];
 
                     int i;
                     Log.d("buffersize", String.valueOf("working"));
                     int eachFileSizeSent = 0;
-                    while ((i = e.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
+                    while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
 
                         Log.d("filesend", "insenderloopsending");
                         filesize = filesize - i;
@@ -208,65 +203,78 @@ public class FileProgressFragment extends Fragment {
             try {
 
                 Log.d("filesend", "inreceiver");
-                final DataInputStream e = new DataInputStream(socket.getInputStream());
-
-                int numOfFiles = e.readInt();
-                totalFilesSize = e.readInt();
-                progressBar.setMax(totalFilesSize);
-
-                final Long startTime = System.nanoTime();
-                remainingFilesCounter = numOfFiles;
-                for (int i = 0; i < numOfFiles; i++) {
-                    ModelClass modelClass = new ModelClass();
-
-                    Log.d("filesend", "inreceiverloop");
-                    String name = e.readUTF();
-                    String type=e.readUTF();
-                    modelClass.setName(name);
-                    Log.d("sizeapp", name);
-                    File file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
-                    file.createNewFile();
-                    FileOutputStream fileOutputStream = new FileOutputStream(file);
-                    int j = 0;
-                    int size = e.readInt();
-                    modelClass.setSize((long) size);
-                    modelClass.setUri(file.getAbsolutePath());
-                    modelClass.setType(type);
-
-                    byte[] b = new byte[8000];
-                    Log.d("sizeofapp", String.valueOf(size));
-                    while ((j = e.read(b, 0, Math.min(b.length, size))) > 0) {
-                        size = size - j;
-                        fileSizeSent += j;
-                        progressBar.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setProgress(fileSizeSent);
-                            }
-                        });
-                        fileOutputStream.write(b, 0, j);
-                        Log.d("buffersize", String.valueOf(j));
-                        Log.d("filesend", "inreceiverloopsending");
-                    }
+                final DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+                final List<ModelClass> modelClassList = (List<ModelClass>) objectInputStream.readObject();
+                if (modelClassList != null) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-
-                            filesSentCounter++;
-                            filesSendReceivedTextview.setText("Files Received : " + filesSentCounter);
-                            remainingFilesCounter--;
-                            filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
+                            sendingFilesAdapter.submitList(modelClassList);
                         }
                     });
+                    int numOfFiles = modelClassList.size();
+                    totalFilesSize = dataInputStream.readInt();
+                    progressBar.setMax(totalFilesSize);
+
+                    final Long startTime = System.nanoTime();
+                    remainingFilesCounter = numOfFiles;
+                    for (int i = 0; i < numOfFiles; i++) {
+                       ModelClass modelClass=modelClassList.get(i);
+                        File file=null;
+                        Log.d("filesend", "inreceiverloop");
+                        String name = modelClass.getName();
+                        String type = modelClass.getType();
+                        Log.d("sizeapp", name);
+                        if(modelClass.getType().equals("app")) {
+                            file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name+".apk");
+                        }
+                        else
+                            file = new File(getActivity().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
+
+                        file.createNewFile();
+                        FileOutputStream fileOutputStream = new FileOutputStream(file);
+                        int j = 0;
+                        int size = modelClass.getSize().intValue();
 
 
+                        byte[] b = new byte[8000];
+                        Log.d("sizeofapp", String.valueOf(size));
+                        while ((j = dataInputStream.read(b, 0, Math.min(b.length, size))) > 0) {
+                            size = size - j;
+                            fileSizeSent += j;
+                            progressBar.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressBar.setProgress(fileSizeSent);
+                                }
+                            });
+                            fileOutputStream.write(b, 0, j);
+                            Log.d("buffersize", String.valueOf(j));
+                            Log.d("filesend", "inreceiverloopsending");
+                        }
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                filesSentCounter++;
+                                filesSendReceivedTextview.setText("Files Received : " + filesSentCounter);
+                                remainingFilesCounter--;
+                                filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
+                            }
+                        });
+
+
+                    }
+                    final Long stoptime = System.nanoTime();
+                    final float time = (float) (((stoptime - startTime) * 0.1) / (1000 * 60));
                 }
-                final Long stoptime = System.nanoTime();
-                final float time = (float) (((stoptime - startTime) * 0.1) / (1000 * 60));
+                } catch(IOException e){
+                    e.printStackTrace();
+                } catch(ClassNotFoundException e){
+                    e.printStackTrace();
+                }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }
