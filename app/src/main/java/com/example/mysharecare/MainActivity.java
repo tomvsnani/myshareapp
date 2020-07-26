@@ -2,8 +2,8 @@ package com.example.mysharecare;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,10 +14,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WpsInfo;
-import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
@@ -25,40 +22,21 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
-import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
-import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -102,34 +80,18 @@ public class MainActivity extends AppCompatActivity {
         final String extra = getIntent().getStringExtra(AppConstants.SENDRECEIVEEXTRA);
         modelClassList = (List<ModelClass>) getIntent().getSerializableExtra("sendItems");
         frameLayout = findViewById(R.id.filetransferprogressframelayout);
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-
-                startDiscoveryDevices();
-
-
-                if (extra != null && extra.equals(AppConstants.RECEIVE)) {
-                    isReceiver = true;
-                    startLocalService();
-
-
-                } else {
-                    isReceiver = false;
-                    startServiceDiscovery();
-                }
-            }
-        });
-        thread.start();
-
-
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         devicesAdapter = new DevicesAdapter(this);
         devicesListView.setAdapter(devicesAdapter);
         devicesListView.setLayoutManager(linearLayoutManager);
 
         messageTextView = findViewById(R.id.message);
+
+        isReceiver = (extra != null && extra.equals(AppConstants.RECEIVE));
+
+        removeGroupandDiscoverPeers();
+
+        startDiscoveryDevices();
 
 
         setupListeners();
@@ -161,13 +123,7 @@ public class MainActivity extends AppCompatActivity {
         WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("_test", "_presence._tcp"
                 , map);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+
 
         }
         wifiP2pManager.addLocalService(channel, wifiP2pDnsSdServiceInfo, new WifiP2pManager.ActionListener() {
@@ -226,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         wifiP2pManager.addServiceRequest(channel, WifiP2pDnsSdServiceRequest.newInstance(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-               // startDiscoveryDevices();
+                // startDiscoveryDevices();
                 Log.d("discoverservicesrequest", "success");
             }
 
@@ -236,13 +192,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
 
         }
         wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
@@ -372,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             });
                         }
-                        if(networkInfo!=null && !networkInfo.isConnected()){
+                        if (networkInfo != null && !networkInfo.isConnected()) {
                             deletePersistentGroups();
                         }
 
@@ -391,18 +340,9 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                                if (!isReceiver) {
-                                    final List<WifiP2pDevice> wifiP2pDevices = new ArrayList<>(wifiP2pDeviceList.getDeviceList());
-                                    List<WifiP2pDevice> wifiP2pDeviceLists = new ArrayList<>();
-
-
-                                    if (wifiP2pDevices.size() == 0) {
-                                        Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
-
-                                    }
-                                }
-                                if (isReceiver)
-                                    devicesListView.setVisibility(View.GONE);
+                                Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
+                                if(wifiP2pDeviceList.getDeviceList().size()==0)
+                                devicesAdapter.submitList(null);
                             }
                         });
 
@@ -482,11 +422,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        deletePersistentGroups();
+        removeGroupandDiscoverPeers();
+        if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+            getSupportFragmentManager().popBackStack();
+            frameLayout.setVisibility(View.GONE);
+
+        }
     }
 
     private void deletePersistentGroups() {
-        Thread thread=new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -500,34 +445,53 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                        return;
-                    }
-                    wifiP2pManager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
-                        @Override
-                        public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
-
-                            wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
-                                @Override
-                                public void onSuccess() {
-                                    Toast.makeText(MainActivity.this, "group removed", Toast.LENGTH_SHORT).show();
-                                }
-
-                                @Override
-                                public void onFailure(int i) {
-                                    startDiscoveryDevices();
-                                    Toast.makeText(MainActivity.this, "unable to remove group", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    });
+                    removeGroupandDiscoverPeers();
+                    startDiscoveryDevices();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
         thread.start();
+    }
+
+    private void removeGroupandDiscoverPeers() {
+
+        wifiP2pManager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onFailure(int i) {
+
+            }
+        });
+
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            return;
+        }
+        wifiP2pManager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
+
+                wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(MainActivity.this, "group removed", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+
+                        Toast.makeText(MainActivity.this, "unable to remove group", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
     }
 
     private void startDiscoveryDevices() {
@@ -542,29 +506,33 @@ public class MainActivity extends AppCompatActivity {
         wifiP2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-
+                if (isReceiver)
+                    startLocalService();
+                if (!isReceiver)
+                    startServiceDiscovery();
             }
 
             @Override
             public void onFailure(int i) {
 
-                wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        startDiscoveryDevices();
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        startDiscoveryDevices();
-                    }
-                });
+                stopPeerDiscovery();
             }
         });
-//        if (findDevicesButton.getText().toString().contains("started") || findDevicesButton.getText().toString().contains("STARTED")) {
-//            wifiP2pManager.stopPeerDiscovery(channel, stopDiscovery);
-//            wifiP2pManager.cancelConnect(channel, connectDisconnectActionListener);
-        //}
+    }
+
+    private void stopPeerDiscovery() {
+        wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                devicesAdapter.submitList(null);
+                startDiscoveryDevices();
+            }
+
+            @Override
+            public void onFailure(int i) {
+                startDiscoveryDevices();
+            }
+        });
     }
 
 
@@ -594,5 +562,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(wifiBroadCast);
+    }
+
+    @Override
+    protected void onDestroy() {
+        wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                devicesAdapter.submitList(null);
+                Toast.makeText(MainActivity.this, "Discovery Stopped", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Toast.makeText(MainActivity.this, "Discovery Stop failed", Toast.LENGTH_SHORT).show();
+            }
+        });
+        super.onDestroy();
     }
 }
