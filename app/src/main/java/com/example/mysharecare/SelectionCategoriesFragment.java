@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -24,6 +25,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,26 +58,26 @@ public class SelectionCategoriesFragment extends Fragment {
         Log.d("positionextra", String.valueOf(extra));
         this.extra = extra;
         this.selectItemsToSendFragment = fragment;
+
     }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
+        listStack.empty();
+        Log.d("positionextrac", String.valueOf(extra));
     }
 
     private void retrieveFiles() {
         switch (extra) {
             case "app": {
                 if (modelClassList.size() == 0) {
+
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
                             progressBar.setVisibility(View.VISIBLE);
-                            Intent intent = new Intent(Intent.ACTION_MAIN);
-                            intent.addCategory(Intent.CATEGORY_LAUNCHER);
                             //   List<ResolveInfo> resolveInfos = getActivity().getPackageManager().queryIntentActivities(intent, 0);
                             List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
                             //   Collections.sort(applicationInfoList,new ApplicationInfo.DisplayNameComparator(getActivity().getPackageManager()));
@@ -86,16 +88,18 @@ public class SelectionCategoriesFragment extends Fragment {
                                 final ModelClass modelClass = new ModelClass();
                                 Log.d("position", resolveInfo.packageName);
                                 String s = resolveInfo.publicSourceDir;
-                                modelClass.setName(resolveInfo.loadLabel(getActivity().getPackageManager()).toString());
-                                Thread thread1=new Thread(new Runnable() {
+                                if (getActivity() != null)
+                                    modelClass.setName(resolveInfo.loadLabel(getActivity().getPackageManager()).toString());
+                                Thread thread1 = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(resolveInfo.loadIcon(getActivity().getPackageManager()))));
+                                        if (getActivity() != null)
+                                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(resolveInfo.loadIcon(getActivity().getPackageManager()))));
 
                                     }
                                 });
                                 thread1.start();
-                                 modelClass.setUri(s);
+                                modelClass.setUri(s);
                                 modelClass.setType(extra);
                                 modelClass.setSize(new File(resolveInfo.publicSourceDir).length());
                                 modelClassList.add(modelClass);
@@ -122,7 +126,9 @@ public class SelectionCategoriesFragment extends Fragment {
                         public void run() {
                             String[] projection = new String[]{MediaStore.Audio.Media._ID,
                                     MediaStore.Audio.Media.DISPLAY_NAME,
-                                    MediaStore.Audio.Media.SIZE};
+                                    MediaStore.Audio.Media.SIZE,
+                                    MediaStore.Audio.Media.DATA
+                            };
                             Log.d("positiona", "inaudio");
                             Cursor cursor = getActivity().getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                                     projection, null, null, null
@@ -131,6 +137,7 @@ public class SelectionCategoriesFragment extends Fragment {
                             int id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                             int name = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                             int size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
+                            int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
                             cursor.moveToFirst();
                             while (cursor.moveToNext()) {
                                 Log.d("positiona", "audio");
@@ -138,10 +145,14 @@ public class SelectionCategoriesFragment extends Fragment {
                                 Long idd = cursor.getLong(id);
                                 String displayname = cursor.getString(name);
                                 Long sizee = (long) cursor.getInt(size);
+                                String dataa = cursor.getString(data);
                                 Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, idd);
                                 modelClass.setName(displayname);
-                                modelClass.setUri(uri.toString());
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    modelClass.setUri(uri.toString());
+                                } else modelClass.setUri(dataa);
                                 modelClass.setType(extra);
+                                modelClass.setId(idd);
                                 modelClass.setSize(sizee);
                                 modelClassList.add(modelClass);
                             }
@@ -168,7 +179,9 @@ public class SelectionCategoriesFragment extends Fragment {
                         public void run() {
                             String[] projection = new String[]{MediaStore.Video.Media._ID,
                                     MediaStore.Video.Media.DISPLAY_NAME,
-                                    MediaStore.Video.Media.SIZE};
+                                    MediaStore.Video.Media.SIZE,
+                                    MediaStore.Video.Media.DATA
+                            };
                             Log.d("positionv", "invideo");
                             Cursor cursor = getContext().getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                                     projection, null, null, null
@@ -177,6 +190,7 @@ public class SelectionCategoriesFragment extends Fragment {
                             int id = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
                             int name = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
                             int size = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
+                            int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
                             cursor.moveToFirst();
                             while (cursor.moveToNext()) {
                                 Log.d("positionv", "video");
@@ -184,15 +198,19 @@ public class SelectionCategoriesFragment extends Fragment {
                                 Long idd = cursor.getLong(id);
                                 String displayname = cursor.getString(name);
                                 Long sizee = (long) cursor.getInt(size);
+                                String dataa = cursor.getString(data);
                                 Uri uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, idd);
                                 modelClass.setName(displayname);
-                                modelClass.setUri(uri.toString());
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    modelClass.setUri(uri.toString());
+                                } else modelClass.setUri(dataa);
                                 modelClass.setSize(sizee);
                                 modelClass.setType(extra);
+                                modelClass.setId(idd);
                                 modelClassList.add(modelClass);
                             }
                             sendDataToAdapter();
-                            sendDataToAdapter();
+
                             progressBar.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -218,15 +236,15 @@ public class SelectionCategoriesFragment extends Fragment {
                         modelClass.setName(g.getName());
                         modelClass.setUri(g.getAbsolutePath());
                         modelClass.setSize(g.length());
-                        if (!g.isFile())
+                        if (!g.isFile()) {
                             modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
                                     .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
-                        else {
+                            modelClass.setType("dir");
+                        } else {
                             modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
                                     .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
                             modelClass.setType("others");
 
-                           // Log.d("filesize", String.valueOf(g.length()));
                         }
                         modelClassList.add(modelClass);
 
@@ -242,21 +260,99 @@ public class SelectionCategoriesFragment extends Fragment {
                 }
             }
             break;
+            case "images": {
+                if (modelClassList.size() == 0) {
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String[] projection = new String[]{MediaStore.Images.Media._ID,
+                                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                                    MediaStore.Images.Media._ID,
+                                    MediaStore.Images.Media.BUCKET_ID
+                                    ,MediaStore.Images.Media.DATA
+
+                            };
+
+                            Cursor cursor = getContext().getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                    projection, null, null, MediaStore.Images.Media.DATE_ADDED + " DESC"
+                            );
+
+
+                            int id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                            int name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                            int bucketId = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
+                            int data = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+
+                            List<String> bucketNameList = new ArrayList<>();
+
+
+                            cursor.moveToFirst();
+                            while (cursor.moveToNext()) {
+
+
+                                final ModelClass modelClass = new ModelClass();
+                                Long idd = cursor.getLong(id);
+                                String displayname = cursor.getString(name);
+                                String bucketIdd = cursor.getString(bucketId);
+                                String dataa = cursor.getString(data);
+
+                                if (!bucketNameList.contains(bucketIdd)) {
+                                    bucketNameList.add(bucketIdd);
+
+                                    final Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, idd);
+
+                                    modelClass.setName(displayname);
+
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        modelClass.setUri(uri.toString());
+                                    } else modelClass.setUri(dataa);
+
+                                    modelClass.setType("album");
+
+                                    modelClass.setId(idd);
+                                    modelClass.setBucketId(bucketIdd);
+                                    modelClassList.add(modelClass);
+
+
+                                }
+                            }
+                            sendDataToAdapter();
+
+                            progressBar.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressBar.setVisibility(View.GONE);
+                                }
+                            });
+                        }
+                    });
+                    thread.start();
+
+                }
+            }
+            break;
         }
+
+
         getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                Log.d("backpressed", "yes");
+                Log.d("backpressed", String.valueOf(listStack.size()));
 
-                if (!listStack.empty()) {
+                if (listStack.size() != 0) {
                     listStack.pop();
-                    if (!listStack.empty())
-                        if (listStack.size() == 1)
+                    if (!listStack.isEmpty()) {
+                        if (listStack.size() == 1) {
                             Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
-                    selectionAdapter.submitList(listStack.peek());
-                } else {
+
+                        }
+                        selectionAdapter.submitList(listStack.peek());
+                    }
+                }
+                if (listStack.size() == 0) {
                     setEnabled(false);
-                    getActivity().onBackPressed();
+                    if (getActivity() != null)
+                        getActivity().onBackPressed();
                 }
 
             }
@@ -269,18 +365,18 @@ public class SelectionCategoriesFragment extends Fragment {
         int height = drawable.getIntrinsicHeight();
         height = height > 0 ? height : 1;
 
-        Bitmap bitmap=Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
-        Canvas canvas=new Canvas(bitmap);
-        drawable.setBounds(0,0,canvas.getWidth(),canvas.getHeight());
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
     }
 
     private byte[] getBytesFromBitmap(Bitmap bitmap) {
-        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG,100,byteArrayOutputStream);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
         bitmap.recycle();
-        byte[] bytes= byteArrayOutputStream.toByteArray();
+        byte[] bytes = byteArrayOutputStream.toByteArray();
         try {
             byteArrayOutputStream.close();
 
@@ -318,17 +414,37 @@ public class SelectionCategoriesFragment extends Fragment {
             @Override
             public void run() {
                 if (modelClassList.size() > 0) {
+                    if (extra.equals("others")) {
+                        sortList();
+                        Collections.sort(modelClassList, new Comparator<ModelClass>() {
+                            @Override
+                            public int compare(ModelClass modelClass, ModelClass t1) {
+                                return modelClass.getType().compareTo(t1.getType());
+                            }
+                        });
 
-//                    Collections.sort(modelClassList, new Comparator<ModelClass>() {
-//                        @Override
-//                        public int compare(ModelClass modelClass, ModelClass t1) {
-//                            return modelClass.getName().compareTo(t1.getName());
-//                        }
-//                    });
+                    } else if (!extra.equals("images"))
+                        sortList();
 
-                    selectionAdapter.submit(modelClassList);
+                    if (extra.equals("others") || extra.equals("images"))
+                        selectionAdapter.submit(modelClassList);
+                    else selectionAdapter.submitList(modelClassList);
                 }
+
+            }
+        });
+
+    }
+
+
+    private void sortList() {
+        Collections.sort(modelClassList, new Comparator<ModelClass>() {
+            @Override
+            public int compare(ModelClass modelClass, ModelClass t1) {
+
+                return modelClass.getName().compareTo(t1.getName());
             }
         });
     }
 }
+

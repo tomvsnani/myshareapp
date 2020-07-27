@@ -12,6 +12,25 @@ public class ModelClass implements Serializable {
     private String type="";
     private Long size=0L;
     private byte[] bytes;
+    private String bucketId="";
+
+    public String getBucketId() {
+        return bucketId;
+    }
+
+    public void setBucketId(String bucketId) {
+        this.bucketId = bucketId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    private Long id=0L;
 
     public byte[] getBytes() {
         return bytes;

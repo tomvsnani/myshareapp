@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +65,15 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
         if(modelClass.getBytes()!=null && modelClass.getBytes().length>0)
 
             holder.iconimageview.setImageBitmap(getImageFromBytes(modelClass));
+
+        if(modelClass.getType().equals("audio"))
+            Glide.with(context).load(R.drawable.ic_baseline_music_note_24).into(holder.iconimageview);
+
+        if(modelClass.getType().equals("video"))
+            Glide.with(context).load(R.drawable.ic_baseline_movie_filter_24).into(holder.iconimageview);
+
+        if(modelClass.getType().equals("image"))
+            Glide.with(context).load(R.drawable.ic_baseline_image_24).into(holder.iconimageview);
 
         if (progressValue.size() > 0)
             if (progressValue.containsKey(position)) {

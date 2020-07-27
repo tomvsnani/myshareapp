@@ -1,16 +1,12 @@
 package com.example.mysharecare;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.net.TrafficStats;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.net.TrafficStatsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,16 +35,9 @@ import java.util.TimerTask;
 
 public class FileProgressFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+
     List<ModelClass> modelClassList;
     Socket socket;
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
     Boolean isReceiver;
     ProgressBar progressBar;
     TextView filesSendReceivedTextview;
@@ -63,7 +52,6 @@ public class FileProgressFragment extends Fragment {
     TrafficStats trafficStats;
     long totalRtBytes = 0;
     Timer timer;
-    int uid;
     boolean isTransferFinished = false;
 
     public FileProgressFragment(List<ModelClass> modelClassList, Socket socket, Boolean isReceiver) {
@@ -91,41 +79,34 @@ public class FileProgressFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        TimerTask timerTask = new TimerTask() {
-
-
-            @Override
-            public void run() {
-
-                double remainingSizeToBeSentInMb = (totalFilesSize - fileSizeSent) / (double) 1000000;
-                final double timeInSeconds = remainingSizeToBeSentInMb / getSpeed();
-                final double timeInMinutes = timeInSeconds / 60;
-                if (getActivity() != null)
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            if ((int) timeInMinutes <= 0)
-                                timeRemainingTextview.setText("Time Remaining   " + (int) timeInSeconds + "seconds");
-                            else {
-                                if ((int) timeInSeconds > 1)
-                                    timeRemainingTextview.setText("Time Remaining " + String.format("   %.2f", timeInMinutes) + " minutes");
-                                else
-                                    timeRemainingTextview.setText("Time Remaining " + String.format("  %.2f", timeInMinutes) + " minute");
-                            }
-                        }
-                    });
-            }
-        };
-        timer = new Timer();
-        timer.schedule(timerTask, 0, 1000);
+        calculateRemainingTime();
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.fragment_file_progress, container, false);
+
+        initializeViews(v);
+
+        initiateFileTransfer();
+
+        return v;
+    }
+
+    private void initiateFileTransfer() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                startFileTransfer();
+            }
+        });
+        thread.start();
+    }
+
+    private void initializeViews(View v) {
         RecyclerView recyclerView = v.findViewById(R.id.sendingfilesrecyclerview);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false);
         sendingFilesAdapter = new SendingFilesAdapter(getContext());
@@ -140,15 +121,7 @@ public class FileProgressFragment extends Fragment {
 
         progressBar.setMax(totalFilesSize);
 
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                startFileTransfer();
-            }
-        });
-        thread.start();
 
-        return v;
     }
 
 
@@ -176,14 +149,22 @@ public class FileProgressFragment extends Fragment {
 
                     ModelClass modelClass = modelClassList.get(i1);
                     if (modelClass.getType().equals("app") || modelClass.getType().equals("others")) {
-
-                        dataInputStream = new DataInputStream(new FileInputStream(new File(modelClass.getUri())));
+                        uri = Uri.parse(modelClass.getUri());
+                        dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
 
 
                     } else {
-
                         uri = Uri.parse(modelClass.getUri());
-                        dataInputStream = new DataInputStream(getActivity().getContentResolver().openInputStream(uri));
+
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+                                dataInputStream = new DataInputStream(getActivity().getContentResolver().openInputStream(uri));
+                            }
+                            else  dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
+
+
+
 
                     }
 
@@ -195,14 +176,21 @@ public class FileProgressFragment extends Fragment {
 
                     int eachFileSizeSent = 0;
                     Log.d("sendingpackets", "yes");
-
+                    final String[] anim = {". "};
                     while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
                         Log.d("sendingpackets", "yesinwhile");
-                        String anim=". ";
-                        anim=anim+".";
-                        if(anim.length()==6)
-                            anim=". ";
-                        sendingHeadingTextView.setText(anim);
+
+
+                        sendingHeadingTextView.post(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                anim[0] = anim[0] + ".";
+                                if (anim[0].length() == 8)
+                                    anim[0] = " .";
+                                sendingHeadingTextView.setText(anim[0]);
+                            }
+                        });
                         filesize = filesize - i;
                         fileSizeSent += i;
                         eachFileSizeSent += i;
@@ -224,30 +212,12 @@ public class FileProgressFragment extends Fragment {
                         });
 
                     }
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            filesSentCounter++;
-                            filesSendReceivedTextview.setText("Files Sent : " + filesSentCounter);
-                            remainingFilesCounter--;
-                            filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
-                        }
-                    });
+                    updateFilesSentReceivedViews("Files Sent : ");
 
                 }
 
-                Log.d("okay", "time");
-                final Long stoptime = System.currentTimeMillis();
-                final double time = (((double) (stoptime - startTime) / ((double) (1000 * 60))));
-                Log.d("okay", String.format("%.2f", time));
-                if (dataInputStream != null)
-                    dataInputStream.close();
-                objectOutputStream.close();
-                dataOutputStream.close();
-                if (socket != null && socket.isConnected())
-                    socket.close();
-                isTransferFinished = true;
-                timer.cancel();
+                calculateTimeElapsed(startTime);
+                closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -314,49 +284,101 @@ public class FileProgressFragment extends Fragment {
                             });
                             fileOutputStream.write(b, 0, j);
                         }
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                filesSentCounter++;
-                                filesSendReceivedTextview.setText("Files Received : " + filesSentCounter);
-                                remainingFilesCounter--;
-                                filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
-                            }
-                        });
+                        updateFilesSentReceivedViews("Files Received : ");
 
 
                     }
 
-                    final Long stoptime = System.currentTimeMillis();
-                    final double time = (((double) (stoptime - startTime) / ((double) (1000 * 60))));
-                    Log.d("okay", String.format("%.2f", time));
-                    dataInputStream.close();
-                    objectInputStream.close();
-                    if (fileOutputStream != null)
-                        fileOutputStream.close();
-                    if (socket != null && socket.isConnected()) {
-                        try {
-                            socket.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    calculateTimeElapsed(startTime);
+                    closeConnectionsReceiver(dataInputStream, objectInputStream, fileOutputStream);
 
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
-            } finally {
-
             }
 
         }
     }
 
-    public double getSpeed() {
-        long wifibytes = 0;
+    private void updateFilesSentReceivedViews(final String s) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                filesSentCounter++;
+                filesSendReceivedTextview.setText(s + filesSentCounter);
+                remainingFilesCounter--;
+                filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
+            }
+        });
+    }
+
+    private void closeConnectionsReceiver(DataInputStream dataInputStream, ObjectInputStream objectInputStream, FileOutputStream fileOutputStream) throws IOException {
+        dataInputStream.close();
+        objectInputStream.close();
+        if (fileOutputStream != null)
+            fileOutputStream.close();
+        if (socket != null && socket.isConnected()) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void calculateTimeElapsed(Long startTime) {
+        Log.d("okay", "time");
+        final Long stoptime = System.currentTimeMillis();
+        final double time = (((double) (stoptime - startTime) / ((double) (1000 * 60))));
+        Log.d("okay", String.format("%.2f", time));
+    }
+
+    private void closeAllConnectionsSender(DataOutputStream dataOutputStream, ObjectOutputStream objectOutputStream, DataInputStream dataInputStream) throws IOException {
+        if (dataInputStream != null)
+            dataInputStream.close();
+        objectOutputStream.close();
+        dataOutputStream.close();
+        if (socket != null && socket.isConnected())
+            socket.close();
+        isTransferFinished = true;
+        timer.cancel();
+    }
+
+    private void calculateRemainingTime() {
+        TimerTask timerTask = new TimerTask() {
+
+            @Override
+            public void run() {
+
+                double remainingSizeToBeSentInMb = (totalFilesSize - fileSizeSent) / (double) 1000000;
+                final double timeInSeconds = remainingSizeToBeSentInMb / getConnectionSpeed();
+                final double timeInMinutes = timeInSeconds / 60;
+                if (getActivity() != null)
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            if ((int) timeInMinutes <= 0)
+                                timeRemainingTextview.setText("Time Remaining   " + (int) timeInSeconds + " seconds");
+                            else {
+                                if ((int) timeInSeconds > 1)
+                                    timeRemainingTextview.setText("Time Remaining " + String.format("   %.2f", timeInMinutes) + " minutes");
+                                else
+                                    timeRemainingTextview.setText("Time Remaining " + String.format("  %.2f", timeInMinutes) + " minute");
+                            }
+                        }
+                    });
+            }
+        };
+        timer = new Timer();
+        timer.schedule(timerTask, 0, 1000);
+    }
+
+    public double getConnectionSpeed() {
+        long wifibytes;
         if (!isReceiver) {
             wifibytes = (TrafficStats.getTotalTxBytes() - TrafficStats.getMobileTxBytes());
         } else wifibytes = TrafficStats.getTotalRxBytes() - TrafficStats.getMobileRxBytes();

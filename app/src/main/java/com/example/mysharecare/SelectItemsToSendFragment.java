@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -25,12 +26,10 @@ import java.util.List;
 
 public class SelectItemsToSendFragment extends Fragment implements SelectionAdapter.SelectedItemsInterface {
     List<ModelClass> modelClassList = new ArrayList<>();
-    List<InputStream> inputStreams = new ArrayList<>();
-    MutableLiveData<List<InputStream>> listMutableLiveData = new MutableLiveData<>();
-
     Button sendButton;
     ViewPager2 viewPager2;
     TabLayout tableLayout;
+    Button selectedItemsCountButton;
 
 
     public SelectItemsToSendFragment() {
@@ -45,6 +44,7 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         sendButton = v.findViewById(R.id.sendtoActivitybutton);
         viewPager2 = v.findViewById(R.id.viewpager);
         tableLayout = v.findViewById(R.id.tablayout);
+        selectedItemsCountButton = v.findViewById(R.id.selecteditemsbutton);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
         new TabLayoutMediator(tableLayout, viewPager2, new TabLayoutMediator.TabConfigurationStrategy() {
             @Override
@@ -56,14 +56,22 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
                         tab.setText("Apps");
                         break;
                     case 1:
-                        tab.setText("videos");
+                        tab.setText("Videos");
+                        tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
                     case 2:
                         tab.setText("Audio");
+                        tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
                     case 3:
-                        tab.setText("others");
+                        tab.setText("Images");
+                        tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
+                    case 4:
+                        tab.setText("Files");
+                        tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
+                        break;
+
                 }
 
             }
@@ -72,31 +80,26 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         return v;
     }
 
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
-
     @Override
     public void SelectedItemsCallback(ModelClass modelClass, boolean addOrRemoveExtra) {
 
-       if(addOrRemoveExtra)
+        if (addOrRemoveExtra)
             modelClassList.add(modelClass);
-       else
-           modelClassList.remove(modelClass);
+        else
+            modelClassList.remove(modelClass);
 
-     // Log.d("typee", modelClass.getType()+modelClass.getLabel());
+        selectedItemsCountButton.setText(String.valueOf("Items ( " + modelClassList.size() + " )"));
+
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (modelClassList.size() > 0) {
+                    Intent intent = new Intent(getActivity(), MainActivity.class);
 
-                Intent intent = new Intent(getActivity(), MainActivity.class);
-
-                intent.putExtra("sendItems", (Serializable) modelClassList);
-                startActivity(intent);
+                    intent.putExtra("sendItems", (Serializable) modelClassList);
+                    startActivity(intent);
+                } else
+                    Toast.makeText(getContext(), "Please select items to send .", Toast.LENGTH_SHORT).show();
             }
         });
     }

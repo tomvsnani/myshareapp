@@ -27,15 +27,18 @@ SelectItemsToSendFragment fragment;
                 break;
             case 2:extra="audio";
                 break;
-            case 3:extra="others";
+            case 3:extra="images";
                 break;
+            case 4:extra="others";
+            break;
         }
         SelectionCategoriesFragment selectionCategoriesFragment=new SelectionCategoriesFragment(extra,fragment);
         return selectionCategoriesFragment;
+
     }
 
     @Override
     public int getItemCount() {
-        return 4;
+        return 5;
     }
 }

@@ -3,9 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
 
->
+    >
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="0dp"
@@ -16,6 +17,8 @@
     <com.google.android.material.tabs.TabLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:tabTextAppearance="@android:style/TextAppearance.Widget.TabWidget"
+        app:tabSelectedTextColor="#6b6b6b"
         android:id="@+id/tablayout"/>
     <androidx.viewpager2.widget.ViewPager2
         android:layout_width="match_parent"
@@ -25,14 +28,37 @@
 
 </LinearLayout>
 
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_margin="16dp"
+    android:elevation="8dp"
 
+
+    tools:ignore="UnusedAttribute">
     <Button
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
+        android:text="items"
+        android:layout_weight="1"
+        android:layout_marginRight="4dp"
+        android:layout_marginLeft="4dp"
+        android:textColor="#ffffff"
+        android:background="@drawable/sendingfilesdrawable"
+        android:id="@+id/selecteditemsbutton"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="send"
         android:layout_gravity="right"
-        android:layout_weight="0.09"
-        android:layout_margin="16dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginLeft="4dp"
+        android:textColor="#ffffff"
+        android:background="@drawable/sendingfilesdrawable"
+        android:layout_weight="1"
+
         android:id="@+id/sendtoActivitybutton"/>
+</LinearLayout>
 
 </LinearLayout>

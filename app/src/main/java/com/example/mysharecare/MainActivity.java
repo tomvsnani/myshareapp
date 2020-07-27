@@ -54,13 +54,10 @@ public class MainActivity extends AppCompatActivity {
     Button wifiOnOffButton;
     RecyclerView devicesListView;
     ArrayAdapter arrayAdapter;
-
-    WifiP2pManager.ActionListener stopDiscovery;
     EditText messageTextView;
     WifiP2pManager.ActionListener connectDisconnectActionListener;
     Boolean isReceiver;
     ProgressBar progressBar;
-    MutableLiveData<List<InputStream>> inputStreamList = new MutableLiveData<>();
     List<ModelClass> modelClassList = new ArrayList<>();
     DevicesAdapter devicesAdapter;
     FrameLayout frameLayout;
@@ -108,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int i) {
-                addlocalservice();
+
             }
         });
 
@@ -149,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int i) {
-                addServiceRequest();
+
             }
         });
 
@@ -165,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("discovertxtresponse", "success");
                 Log.d("discovertxtresponse", wifiP2pDevice.deviceAddress);
                 wifiP2pDevice.deviceName = deviceNames[0];
+                if(!wifiP2pDevices.contains(wifiP2pDevice))
                 wifiP2pDevices.add(wifiP2pDevice);
 
                 devicesAdapter.submit(wifiP2pManager, wifiP2pDevices, channel, connectDisconnectActionListener);
@@ -530,7 +528,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int i) {
-                startDiscoveryDevices();
+
             }
         });
     }

@@ -95,11 +95,12 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
 
                             @Override
                             public void onFailure(int i) {
-
+                                connectToDevice(wifiP2pDevice);
                             }
                         });
                     }
                     connectToDevice(wifiP2pDevice);
+
                 }
             });
         }
