@@ -1,18 +1,22 @@
 package com.example.mysharecare;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -31,6 +35,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -61,6 +66,12 @@ public class MainActivity extends AppCompatActivity {
     List<ModelClass> modelClassList = new ArrayList<>();
     DevicesAdapter devicesAdapter;
     FrameLayout frameLayout;
+    boolean dialogShowed = false;
+    LocationManager locationManager;
+    WifiManager wifiManager;
+    AlertDialog alertDialog;
+    MutableLiveData<Boolean> isLocationChanged = new MutableLiveData<>();
+    MutableLiveData<Boolean> isWifiChanged = new MutableLiveData<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,14 +97,43 @@ public class MainActivity extends AppCompatActivity {
 
         isReceiver = (extra != null && extra.equals(AppConstants.RECEIVE));
 
-        removeGroupandDiscoverPeers();
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        startDiscoveryDevices();
+        if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            showAlertDialog();
+        } else {
+            removeGroupandDiscoverPeers();
+
+            startDiscoveryDevices();
+
+            setupListeners();
+        }
+
+    }
 
 
-        setupListeners();
+    private boolean turnOnLOcation(LocationManager locationManager) {
+
+        Toast.makeText(this, "Please turn on location", Toast.LENGTH_SHORT).show();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    private boolean turnOnWifi(WifiManager wifiManager) {
 
 
+        Toast.makeText(MainActivity.this, "Please turn on wlan", Toast.LENGTH_SHORT).show();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent intent = new Intent(Settings.Panel.ACTION_WIFI);
+            startActivity(intent);
+        }
+
+        return wifiManager.isWifiEnabled();
     }
 
     private void startLocalService() {
@@ -162,8 +202,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("discovertxtresponse", "success");
                 Log.d("discovertxtresponse", wifiP2pDevice.deviceAddress);
                 wifiP2pDevice.deviceName = deviceNames[0];
-                if(!wifiP2pDevices.contains(wifiP2pDevice))
-                wifiP2pDevices.add(wifiP2pDevice);
+                if (!wifiP2pDevices.contains(wifiP2pDevice))
+                    wifiP2pDevices.add(wifiP2pDevice);
 
                 devicesAdapter.submit(wifiP2pManager, wifiP2pDevices, channel, connectDisconnectActionListener);
 
@@ -213,6 +253,18 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(final Context context, Intent intent) {
             if (intent.getAction() != null) {
                 switch (intent.getAction()) {
+                    case LocationManager.PROVIDERS_CHANGED_ACTION: {
+                        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                            isLocationChanged.setValue(true);
+                        } else isLocationChanged.setValue(false);
+                    }
+                    break;
+                    case WifiManager.WIFI_STATE_CHANGED_ACTION: {
+                        if (wifiManager.isWifiEnabled())
+                            isWifiChanged.setValue(true);
+                        else isWifiChanged.setValue(false);
+                    }
+                    break;
                     case WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION:
 
 
@@ -339,8 +391,8 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
                                 Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
-                                if(wifiP2pDeviceList.getDeviceList().size()==0)
-                                devicesAdapter.submitList(null);
+                                if (wifiP2pDeviceList.getDeviceList().size() == 0)
+                                    devicesAdapter.submitList(null);
                             }
                         });
 
@@ -390,24 +442,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        wifiOnOffButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-
-//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-//                    Intent intent = new Intent(Settings.Panel.ACTION_WIFI);
-//                    startActivity(intent);
-//                } else {
-                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                if (wifiManager.isWifiEnabled())
-                    wifiManager.setWifiEnabled(false);
-                else
-                    wifiManager.setWifiEnabled(true);
-                // }
-
-            }
-        });
 
         findDevicesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -537,6 +571,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+
         IntentFilter intentFilter = new IntentFilter();
 
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -551,9 +587,169 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+
+        intentFilter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
+
+
         wifiBroadCast = new WifiBroadCast();
         registerReceiver(wifiBroadCast, intentFilter);
 
+
+    }
+
+    private void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View v = getLayoutInflater().inflate(R.layout.wifilocationtuenonlayout, null);
+        builder.setView(v);
+
+
+        final Button wifiTurnOnButton = v.findViewById(R.id.turnonwifibutton);
+        final Button locationTurnOnButton = v.findViewById(R.id.turnonlocationbutton);
+        final LinearLayout wifiLinearLayout = v.findViewById(R.id.wifilinearlayout);
+        final LinearLayout locationLinearLayout = v.findViewById(R.id.locationlinearlayout);
+        builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+                if (wifiManager.isWifiEnabled() && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    removeGroupandDiscoverPeers();
+
+                    startDiscoveryDevices();
+
+                    setupListeners();
+                } else {
+                    locationLinearLayout.setVisibility(View.VISIBLE);
+                    wifiLinearLayout.setVisibility(View.VISIBLE);
+                    showAlertDialog();
+                }
+            }
+        });
+        alertDialog = builder.create();
+        alertDialog.setCancelable(false);
+        alertDialog.show();
+
+        isLocationChanged.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (alertDialog != null) {
+
+                    if (aBoolean) {
+                        locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+                    } else {
+
+                        locationLinearLayout.setVisibility(View.VISIBLE);
+                        locationTunedOffSetting(locationTurnOnButton, locationLinearLayout);
+                    }
+
+                }
+            }
+        });
+
+        isWifiChanged.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (alertDialog != null) {
+                    if (aBoolean) {
+                        wifiTurnedOnSetting(wifiTurnOnButton);
+                    } else {
+                        wifiTurnOffsetting(wifiTurnOnButton);
+                        wifiLinearLayout.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        });
+
+        if (wifiManager.isWifiEnabled()) {
+            wifiTurnedOnSetting(wifiTurnOnButton);
+            wifiLinearLayout.setVisibility(View.GONE);
+        } else {
+            wifiManager.setWifiEnabled(true);
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (wifiManager.isWifiEnabled()) {
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    Log.d("truee", "true");
+//                    builder.setCancelable(true);
+//                    alertDialog.setCancelable(true);
+                    alertDialog.cancel();
+                    alertDialog.dismiss();
+
+
+                }
+                wifiTurnedOnSetting(wifiTurnOnButton);
+            } else wifiTurnOffsetting(wifiTurnOnButton);
+
+
+            wifiTurnOnButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (turnOnWifi(wifiManager)) {
+                        wifiTurnedOnSetting(wifiTurnOnButton);
+                    }
+
+
+                }
+            });
+
+        }
+
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+        } else {
+            locationTunedOffSetting(locationTurnOnButton, locationLinearLayout);
+        }
+
+
+        locationTurnOnButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (turnOnLOcation(locationManager))
+                    locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+            }
+        });
+
+
+
+
+
+
+
+    }
+
+    private void wifiTurnOffsetting(Button wifiTurnOnButton) {
+        wifiTurnOnButton.setText("Turn on");
+        setButtonColor(wifiTurnOnButton, R.color.errorColor, R.drawable.buttondrawableerror);
+        wifiTurnOnButton.setClickable(true);
+    }
+
+    private void wifiTurnedOnSetting(Button wifiTurnOnButton) {
+        wifiTurnOnButton.setText("Turned On");
+        setButtonColor(wifiTurnOnButton, R.color.colorPrimary, R.drawable.buttonshape);
+        wifiTurnOnButton.setClickable(false);
+    }
+
+    private void locationTunedOffSetting(Button locationTurnOnButton, LinearLayout locationLinearLayout) {
+        setButtonColor(locationTurnOnButton, R.color.errorColor, R.drawable.buttondrawableerror);
+        locationTurnOnButton.setText("Turn On");
+        //  locationLinearLayout.setVisibility(View.VISIBLE);
+        locationTurnOnButton.setClickable(true);
+    }
+
+    private void locationTurnedOnsetting(Button locationTurnOnButton, LinearLayout locationLinearLayout) {
+        setButtonColor(locationTurnOnButton, R.color.colorPrimary, R.drawable.buttonshape);
+        locationTurnOnButton.setText("Turned On");
+        // locationLinearLayout.setVisibility(View.GONE);
+        locationTurnOnButton.setClickable(false);
+    }
+
+    private void setButtonColor(Button wifiTurnOnButton, int p, int p2) {
+        wifiTurnOnButton.setTextColor(getResources().getColor(p));
+        wifiTurnOnButton.setBackground(getResources().getDrawable(p2));
     }
 
     @Override

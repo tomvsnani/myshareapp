@@ -156,7 +156,6 @@ public class FileProgressFragment extends Fragment {
                     } else {
                         uri = Uri.parse(modelClass.getUri());
 
-
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 
                                 dataInputStream = new DataInputStream(getActivity().getContentResolver().openInputStream(uri));
