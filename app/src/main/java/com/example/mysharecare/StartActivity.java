@@ -11,45 +11,24 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toolbar;
 
 public class StartActivity extends AppCompatActivity {
-    Button sendButton;
-    Button receiveButton;
-    LinearLayout startingLinearLayout;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
-        sendButton = findViewById(R.id.sendButton);
-        receiveButton = findViewById(R.id.receiveButton);
-        startingLinearLayout = findViewById(R.id.startingLinearLayout);
+
         if (this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
-
+        getSupportFragmentManager().beginTransaction().add(R.id.startcontainer, new StartingFragment()).addToBackStack(null).commit();
 
     }
 
-    public void sendreceive(View view) {
-        startingLinearLayout.setVisibility(View.GONE);
-        if (view.getId() == R.id.sendButton)
 
-            getSupportFragmentManager().beginTransaction().replace(R.id.startcontainer, new SelectItemsToSendFragment()).commit();
-        else {
-            Intent intent = new Intent(this, MainActivity.class);
-
-            if (view.getId() == R.id.receiveButton) {
-                intent.putExtra(AppConstants.SENDRECEIVEEXTRA, AppConstants.RECEIVE);
-            }
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
 }

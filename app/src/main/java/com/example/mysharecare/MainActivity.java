@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     AlertDialog alertDialog;
     MutableLiveData<Boolean> isLocationChanged = new MutableLiveData<>();
     MutableLiveData<Boolean> isWifiChanged = new MutableLiveData<>();
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         devicesAdapter = new DevicesAdapter(this);
         devicesListView.setAdapter(devicesAdapter);
         devicesListView.setLayoutManager(linearLayoutManager);
+//        setSupportActionBar((Toolbar) findViewById(R.id.mainactivitytoolbar));
 
         messageTextView = findViewById(R.id.message);
 

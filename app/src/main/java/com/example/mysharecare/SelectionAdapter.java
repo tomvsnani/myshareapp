@@ -2,20 +2,15 @@ package com.example.mysharecare;
 
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.CancellationSignal;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -25,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,7 +35,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.SelectionViewHolder> {
@@ -210,7 +203,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                 modelClassList.add(modelClassInner);
 
                             }
-                            submit(modelClassList);
+                            submit(modelClassList,"others");
                         } else {
                             Log.d("filesize", String.valueOf(file.length()));
 
@@ -258,7 +251,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     modelClass.setId(idd);
                                     modelClassList.add(modelClass);
                                 }
-                                submit(modelClassList);
+                                submit(modelClassList,"images");
 
                             }
                         });
@@ -312,8 +305,11 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
     }
 
-    public void submit(List<ModelClass> list) {
-        SelectionCategoriesFragment.listStack.push(list);
+    public void submit(List<ModelClass> list,String extra) {
+        if(extra.equals("others"))
+        SelectionCategoriesFragment.listStackFiles.push(list);
+        if(extra.equals("images"))
+            SelectionCategoriesFragment.listStackImages.push(list);
         submitList(list);
 
     }

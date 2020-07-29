@@ -12,6 +12,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,6 +53,7 @@ public class FileProgressFragment extends Fragment  {
     TextView timeRemainingTextview;
     TextView sendingHeadingTextView;
     SendingFilesAdapter sendingFilesAdapter;
+    Toolbar toolbar;
 
     int totalFilesSize;
 
@@ -80,6 +83,9 @@ public class FileProgressFragment extends Fragment  {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
+        ((AppCompatActivity)(getActivity())).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ((AppCompatActivity)(getActivity())).getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
@@ -114,7 +120,10 @@ public class FileProgressFragment extends Fragment  {
 
         initializeViews(v);
 
-
+        if(isReceiver){
+            sendingHeadingTextView.setText("Files Received :");
+        }
+        else  sendingHeadingTextView.setText("Files sent :");
 
         return v;
     }
@@ -132,7 +141,7 @@ public class FileProgressFragment extends Fragment  {
         timeRemainingTextview = v.findViewById(R.id.timeremailingsextview);
         filesSendReceivedTextview = v.findViewById(R.id.sentfilestextview);
         sendingHeadingTextView = v.findViewById(R.id.sendingextview);
-
+        toolbar=v.findViewById(R.id.fileprogressfragmenttoolbar);
         progressBar.setMax(totalFilesSize);
 
 

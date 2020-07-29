@@ -35,8 +35,8 @@ public class FileTransferService extends Service {
     boolean isReceiver;
     int filesSentCounter;
     int remainingFilesCounter;
-    int totalFilesSize;
-    int fileSizeSent;
+    int totalFilesSize = 0;
+    int fileSizeSent = 0;
     TrafficStats trafficStats;
     long totalRtBytes = 0;
     Timer timer;
@@ -127,7 +127,7 @@ public class FileTransferService extends Service {
             final DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             FileOutputStream fileOutputStream = null;
-            final List<ModelClass> modelClassList = (List<ModelClass>) objectInputStream.readObject();
+            modelClassList = (List<ModelClass>) objectInputStream.readObject();
             if (modelClassList != null) {
                 if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
                     fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
@@ -141,6 +141,8 @@ public class FileTransferService extends Service {
                 fileProgressFragment.progressBar.setMax(totalFilesSize);
                 remainingFilesCounter = numOfFiles;
                 final Long startTime = System.currentTimeMillis();
+
+
                 for (int i = 0; i < numOfFiles; i++) {
                     Log.d("receivingfiles", "yes");
                     ModelClass modelClass = modelClassList.get(i);
@@ -158,7 +160,7 @@ public class FileTransferService extends Service {
 
                     int eachFileSize = 0;
                     byte[] b = new byte[61440];
-
+                    updateFilesSentReceivedViews();
                     while ((j = dataInputStream.read(b, 0, Math.min(b.length, size))) > 0) {
                         Log.d("receivingpackets", "yesinwhile");
                         size = size - j;
@@ -182,9 +184,10 @@ public class FileTransferService extends Service {
                             });
                         fileOutputStream.write(b, 0, j);
                     }
-                    updateFilesSentReceivedViews("Files Received : ");
 
-
+                    filesSentCounter++;
+                    remainingFilesCounter--;
+                    updateFilesSentReceivedViews();
                 }
 
                 calculateTimeElapsed(startTime);
@@ -197,9 +200,6 @@ public class FileTransferService extends Service {
             e.printStackTrace();
         }
     }
-
-
-
 
 
     private void initializeSending() {
@@ -249,7 +249,8 @@ public class FileTransferService extends Service {
 
                 int eachFileSizeSent = 0;
                 Log.d("sendingpackets", "yes");
-                final String[] anim = {". "};
+                updateFilesSentReceivedViews();
+
                 while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
                     Log.d("sendingpackets", "yesinwhile");
 
@@ -258,10 +259,7 @@ public class FileTransferService extends Service {
                             @Override
                             public void run() {
 
-                                anim[0] = anim[0] + ".";
-                                if (anim[0].length() == 8)
-                                    anim[0] = " .";
-                                fileProgressFragment.sendingHeadingTextView.setText(anim[0]);
+
                             }
                         });
                     filesize = filesize - i;
@@ -288,7 +286,9 @@ public class FileTransferService extends Service {
 
                     }
                 }
-                updateFilesSentReceivedViews("Files Sent : ");
+                filesSentCounter++;
+                remainingFilesCounter--;
+                updateFilesSentReceivedViews();
 
             }
 
@@ -300,9 +300,6 @@ public class FileTransferService extends Service {
     }
 
 
-
-
-
     void calculateTimeElapsed(Long startTime) {
         Log.d("okay", "time");
         final Long stoptime = System.currentTimeMillis();
@@ -311,25 +308,21 @@ public class FileTransferService extends Service {
     }
 
 
-
-
-    void updateFilesSentReceivedViews(final String s) {
+    void updateFilesSentReceivedViews() {
         if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
             fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
 
-                    filesSentCounter++;
+
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesSendReceivedTextview.setText(s + filesSentCounter);
-                    remainingFilesCounter--;
+                        fileProgressFragment.filesSendReceivedTextview.setText( filesSentCounter);
+
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesRemainingTextview.setText("Remaining Files " + remainingFilesCounter);
+                        fileProgressFragment.filesRemainingTextview.setText( remainingFilesCounter);
                 }
             });
     }
-
-
 
 
     void closeAllConnectionsSender(DataOutputStream dataOutputStream, ObjectOutputStream objectOutputStream, DataInputStream dataInputStream) throws IOException {
@@ -344,8 +337,6 @@ public class FileTransferService extends Service {
     }
 
 
-
-
     void closeConnectionsReceiver(DataInputStream dataInputStream, ObjectInputStream objectInputStream, FileOutputStream fileOutputStream) throws IOException {
         dataInputStream.close();
         objectInputStream.close();
@@ -357,13 +348,13 @@ public class FileTransferService extends Service {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            timer.cancel();
         }
     }
 
 
-
-
     private void calculateRemainingTime() {
+
         TimerTask timerTask = new TimerTask() {
 
             @Override
@@ -392,8 +383,6 @@ public class FileTransferService extends Service {
         timer = new Timer();
         timer.schedule(timerTask, 0, 1000);
     }
-
-
 
 
     public double getConnectionSpeed() {

@@ -1,48 +1,36 @@
 package com.example.mysharecare;
 
 import android.content.ContentUris;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.AttributeSet;
 import android.util.Log;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -51,7 +39,9 @@ public class SelectionCategoriesFragment extends Fragment {
     List<ModelClass> modelClassList = new ArrayList<>();
     SelectionAdapter selectionAdapter;
     SelectItemsToSendFragment selectItemsToSendFragment;
-    static Stack<List<ModelClass>> listStack = new Stack<>();
+    static Stack<List<ModelClass>> listStackFiles = new Stack<>();
+    static Stack<List<ModelClass>> listStackImages = new Stack<>();
+   static int i=-1;
     ProgressBar progressBar;
 
     public SelectionCategoriesFragment(String extra, SelectItemsToSendFragment fragment) {
@@ -65,7 +55,7 @@ public class SelectionCategoriesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        listStack.empty();
+        listStackFiles.empty();
         Log.d("positionextrac", String.valueOf(extra));
     }
 
@@ -337,24 +327,33 @@ public class SelectionCategoriesFragment extends Fragment {
         getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                Log.d("backpressed", String.valueOf(listStack.size()));
+                Log.d("positionextraa",String.valueOf(i));
+                if(i==3)
+                    handleBackstack(listStackImages);
+                if(i==4)
 
-                if (listStack.size() != 0) {
-                    listStack.pop();
-                    if (!listStack.isEmpty()) {
-                        if (listStack.size() == 1) {
+                handleBackstack(listStackFiles);
+
+            }
+
+            private void handleBackstack(Stack<List<ModelClass>> listStackFiles) {
+                Log.d("backpressed", String.valueOf(listStackFiles.size()));
+
+                if (listStackFiles.size() != 0) {
+                    listStackFiles.pop();
+                    if (!listStackFiles.isEmpty()) {
+                        if (listStackFiles.size() == 1) {
                             Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
 
                         }
-                        selectionAdapter.submitList(listStack.peek());
+                        selectionAdapter.submitList(listStackFiles.peek());
                     }
                 }
-                if (listStack.size() == 0) {
+                if (listStackFiles.size() == 0) {
                     setEnabled(false);
                     if (getActivity() != null)
                         getActivity().onBackPressed();
                 }
-
             }
         });
     }
@@ -427,7 +426,7 @@ public class SelectionCategoriesFragment extends Fragment {
                         sortList();
 
                     if (extra.equals("others") || extra.equals("images"))
-                        selectionAdapter.submit(modelClassList);
+                        selectionAdapter.submit(modelClassList,extra);
                     else selectionAdapter.submitList(modelClassList);
                 }
 
