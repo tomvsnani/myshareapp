@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
     List<ModelClass> modelClassList = new ArrayList<>();
     DevicesAdapter devicesAdapter;
     FrameLayout frameLayout;
-    boolean dialogShowed = false;
     LocationManager locationManager;
     WifiManager wifiManager;
     AlertDialog alertDialog;
@@ -124,6 +123,8 @@ public class MainActivity extends AppCompatActivity {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
+
+
     private boolean turnOnWifi(WifiManager wifiManager) {
 
 
@@ -135,6 +136,8 @@ public class MainActivity extends AppCompatActivity {
 
         return wifiManager.isWifiEnabled();
     }
+
+
 
     private void startLocalService() {
         wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
@@ -148,9 +151,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
     }
+
+
+
 
     private void addlocalservice() {
         Map<String, String> map = new HashMap<>();
@@ -177,6 +181,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+
+
     private void startServiceDiscovery() {
         wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
             @Override
@@ -189,9 +196,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
     }
+
+
+
 
     private void addServiceRequest() {
         final String[] deviceNames = {"Android device"};
@@ -246,134 +254,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /////// Broadcast Receiver ////////////
+
     class WifiBroadCast extends BroadcastReceiver {
-
-
         @Override
         public void onReceive(final Context context, Intent intent) {
             if (intent.getAction() != null) {
                 switch (intent.getAction()) {
                     case LocationManager.PROVIDERS_CHANGED_ACTION: {
-                        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                            isLocationChanged.setValue(true);
-                        } else isLocationChanged.setValue(false);
+                        onLOcationStateChangedBroadcast();
                     }
                     break;
                     case WifiManager.WIFI_STATE_CHANGED_ACTION: {
-                        if (wifiManager.isWifiEnabled())
-                            isWifiChanged.setValue(true);
-                        else isWifiChanged.setValue(false);
+                        onWifistateChangedBrodcast();
                     }
                     break;
+
                     case WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION:
 
 
-                        int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
+                        onStateChangedBroadcast(intent);
 
-                        if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-
-                            wifiOnOffButton.setText("wifi is on. Turn off wifi ?");
-
-                        } else {
-
-                            wifiOnOffButton.setText("wifi is off. Turn on wifi ?");
-
-                        }
                         break;
 
 
                     case WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION: {
 
-                        NetworkInfo networkInfo = (NetworkInfo) intent
-                                .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-
-                        if (networkInfo != null && networkInfo.isConnected()) {
-
-                            Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_SHORT).show();
-
-                            wifiP2pManager.requestConnectionInfo(channel, new WifiP2pManager.ConnectionInfoListener() {
-                                @Override
-                                public void onConnectionInfoAvailable(final WifiP2pInfo wifiP2pInfo) {
-
-                                    final Thread thread = new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
-                                                Log.d("sizeserve", "server");
-                                                wifiOnOffButton.post(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        wifiOnOffButton.setText("server");
-                                                    }
-                                                });
-                                                try {
-                                                    ServerSocket serverSocket = new ServerSocket(5000);
-                                                    final Socket socket = serverSocket.accept();
-                                                    Log.d("sizeconnected", String.valueOf(socket.isConnected()));
-                                                    wifiOnOffButton.post(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            wifiOnOffButton.setText("connected");
-                                                        }
-                                                    });
-
-                                                    frameLayout.post(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            frameLayout.setVisibility(View.VISIBLE);
-                                                        }
-                                                    });
-                                                    getSupportFragmentManager().beginTransaction().
-                                                            replace(R.id.filetransferprogressframelayout,
-                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
-
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                }
-
-                                            }
-
-
-                                            if (wifiP2pInfo.groupFormed && !wifiP2pInfo.isGroupOwner) {
-                                                try {
-                                                    Log.d("sizeserve", "client");
-
-
-                                                    wifiOnOffButton.post(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            wifiOnOffButton.setText("client");
-
-                                                        }
-                                                    });
-                                                    List<String> strings = new ArrayList<>();
-                                                    Socket socket = new Socket();
-                                                    socket.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
-                                                    frameLayout.post(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            frameLayout.setVisibility(View.VISIBLE);
-                                                        }
-                                                    });
-                                                    getSupportFragmentManager().beginTransaction().
-                                                            replace(R.id.filetransferprogressframelayout,
-                                                                    new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
-
-
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        }
-                                    });
-                                    thread.start();
-
-                                }
-                            });
-                        }
-                        if (networkInfo != null && !networkInfo.isConnected()) {
-                            deletePersistentGroups();
-                        }
+                        onConnectionChangedBroadcast(intent);
 
                     }
                     break;
@@ -382,19 +289,7 @@ public class MainActivity extends AppCompatActivity {
                     case WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION: {
 
 
-                        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                            return;
-                        }
-                        wifiP2pManager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
-
-                            @Override
-                            public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                                Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
-                                if (wifiP2pDeviceList.getDeviceList().size() == 0)
-                                    devicesAdapter.submitList(null);
-                            }
-                        });
+                        onPeersChangedBroadcast(context);
 
                     }
                     break;
@@ -406,15 +301,7 @@ public class MainActivity extends AppCompatActivity {
 
                     case WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION: {
 
-                        int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
-                        if (extra == (WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)) {
-                            findDevicesButton.setText("Discovery started . stop Discovery ?");
-                            Toast.makeText(context, "Discovery Started", Toast.LENGTH_SHORT).show();
-                        }
-                        if (extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
-                            findDevicesButton.setText("Discovery stopped . start Discovery ?");
-                            Toast.makeText(context, "Discovery Stopped ", Toast.LENGTH_SHORT).show();
-                        }
+                        onDiscoveryChangedBroadcast(context, intent);
 
                     }
                     break;
@@ -424,16 +311,165 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+
+
+
+
+        private void onWifistateChangedBrodcast() {
+            if (wifiManager.isWifiEnabled())
+                isWifiChanged.setValue(true);
+            else isWifiChanged.setValue(false);
+        }
+
+        private void onLOcationStateChangedBroadcast() {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                isLocationChanged.setValue(true);
+            } else isLocationChanged.setValue(false);
+        }
+
+        private void onStateChangedBroadcast(Intent intent) {
+            int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
+
+            if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+
+                wifiOnOffButton.setText("wifi is on. Turn off wifi ?");
+
+            } else {
+
+                wifiOnOffButton.setText("wifi is off. Turn on wifi ?");
+
+            }
+        }
+
+        private void onConnectionChangedBroadcast(Intent intent) {
+            NetworkInfo networkInfo = (NetworkInfo) intent
+                    .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+
+            if (networkInfo != null && networkInfo.isConnected()) {
+
+                Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_SHORT).show();
+
+                wifiP2pManager.requestConnectionInfo(channel, new WifiP2pManager.ConnectionInfoListener() {
+                    @Override
+                    public void onConnectionInfoAvailable(final WifiP2pInfo wifiP2pInfo) {
+
+                        final Thread thread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
+                                    Log.d("sizeserve", "server");
+                                    wifiOnOffButton.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            wifiOnOffButton.setText("server");
+                                        }
+                                    });
+                                    try {
+                                        ServerSocket serverSocket = new ServerSocket(5000);
+                                        final Socket socket = serverSocket.accept();
+                                        Log.d("sizeconnected", String.valueOf(socket.isConnected()));
+                                        wifiOnOffButton.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                wifiOnOffButton.setText("connected");
+                                            }
+                                        });
+
+                                        frameLayout.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                frameLayout.setVisibility(View.VISIBLE);
+                                            }
+                                        });
+                                        getSupportFragmentManager().beginTransaction().
+                                                replace(R.id.filetransferprogressframelayout,
+                                                        new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                }
+
+
+                                if (wifiP2pInfo.groupFormed && !wifiP2pInfo.isGroupOwner) {
+                                    try {
+                                        Log.d("sizeserve", "client");
+
+
+                                        wifiOnOffButton.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                wifiOnOffButton.setText("client");
+
+                                            }
+                                        });
+                                        List<String> strings = new ArrayList<>();
+                                        Socket socket = new Socket();
+                                        socket.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
+                                        frameLayout.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                frameLayout.setVisibility(View.VISIBLE);
+                                            }
+                                        });
+                                        getSupportFragmentManager().beginTransaction().
+                                                replace(R.id.filetransferprogressframelayout,
+                                                        new FileProgressFragment(modelClassList, socket, isReceiver)).addToBackStack(null).commit();
+
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        });
+                        thread.start();
+
+                    }
+                });
+            }
+            if (networkInfo != null && !networkInfo.isConnected()) {
+                deletePersistentGroups();
+            }
+        }
+
+        private void onPeersChangedBroadcast(final Context context) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                return;
+            }
+            wifiP2pManager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
+
+                @Override
+                public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
+                    Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
+                    if (wifiP2pDeviceList.getDeviceList().size() == 0)
+                        devicesAdapter.submitList(null);
+                }
+            });
+        }
+
+
+    }
+
+    private void onDiscoveryChangedBroadcast(Context context, Intent intent) {
+        int extra = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
+        if (extra == (WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED)) {
+            findDevicesButton.setText("Discovery started . stop Discovery ?");
+            Toast.makeText(context, "Discovery Started", Toast.LENGTH_SHORT).show();
+        }
+        if (extra == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
+            findDevicesButton.setText("Discovery stopped . start Discovery ?");
+            Toast.makeText(context, "Discovery Stopped ", Toast.LENGTH_SHORT).show();
+        }
     }
 
 
     private void setupListeners() {
-
-
         connectDisconnectActionListener = new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-
             }
 
             @Override
