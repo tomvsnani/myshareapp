@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.viewpager2.widget.ViewPager2;
@@ -30,6 +32,7 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
     ViewPager2 viewPager2;
     TabLayout tableLayout;
     Button selectedItemsCountButton;
+    Toolbar toolbar;
 
 
     public SelectItemsToSendFragment() {
@@ -44,6 +47,8 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         sendButton = v.findViewById(R.id.sendtoActivitybutton);
         viewPager2 = v.findViewById(R.id.viewpager);
         tableLayout = v.findViewById(R.id.tablayout);
+        toolbar=v.findViewById(R.id.fargmenttosendfragmenttoolbar);
+        ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
         selectedItemsCountButton = v.findViewById(R.id.selecteditemsbutton);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
         viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {

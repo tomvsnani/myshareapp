@@ -41,15 +41,18 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     Context context;
     SelectedItemsInterface selectedItemsInterface;
     String type;
+    SelectionCategoriesFragment selectionCategoriesFragment;
     MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
     List<Integer> selectedList = new ArrayList<>();
+    static MutableLiveData<String> path=new MutableLiveData<>();
 
-    protected SelectionAdapter(Context context, final SelectedItemsInterface selectedItemsInterface, String type) {
+    protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type) {
         super(modelClassItemCallback);
-
-        this.context = context;
+        this.selectionCategoriesFragment = context;
+        this.context = context.getContext();
         this.selectedItemsInterface = selectedItemsInterface;
         this.type = type;
+
 
         selectedPosition.observeForever(new Observer<Integer>() {
             @Override
@@ -178,6 +181,8 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                     final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
                     Log.d("enteredd", modelClass.getUri());
                     if (type.equals("others")) {
+                        path.setValue(path.getValue()+modelClass.getName()+" > ");
+
                         File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
                         if (file.isDirectory()) {
                             List<ModelClass> modelClassList = new ArrayList<>();
@@ -203,7 +208,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                 modelClassList.add(modelClassInner);
 
                             }
-                            submit(modelClassList,"others");
+                            submit(modelClassList, "others");
                         } else {
                             Log.d("filesize", String.valueOf(file.length()));
 
@@ -212,7 +217,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                         }
 
                     } else if (modelClass.getType().equals("album")) {
-
+                        path.setValue(path.getValue()+modelClass.getName()+" > ");
                         final ArrayList<ModelClass> modelClassList = new ArrayList<>();
 
                         Thread thread = new Thread(new Runnable() {
@@ -251,7 +256,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     modelClass.setId(idd);
                                     modelClassList.add(modelClass);
                                 }
-                                submit(modelClassList,"images");
+                                submit(modelClassList, "images");
 
                             }
                         });
@@ -305,10 +310,10 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
     }
 
-    public void submit(List<ModelClass> list,String extra) {
-        if(extra.equals("others"))
-        SelectionCategoriesFragment.listStackFiles.push(list);
-        if(extra.equals("images"))
+    public void submit(List<ModelClass> list, String extra) {
+        if (extra.equals("others"))
+            SelectionCategoriesFragment.listStackFiles.push(list);
+        if (extra.equals("images"))
             SelectionCategoriesFragment.listStackImages.push(list);
         submitList(list);
 
@@ -338,7 +343,8 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     };
 
     public static boolean checkIfSame(ModelClass old, ModelClass newItem) {
-        return old.getUri().equals(newItem.getUri()) && old.getName().equals(newItem.getName())
-                ;
+        if (old != null && newItem != null)
+            return old.getUri().equals(newItem.getUri()) && old.getName().equals(newItem.getName());
+        else return true;
     }
 }

@@ -11,7 +11,9 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,7 +24,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,10 +43,13 @@ public class SelectionCategoriesFragment extends Fragment {
     List<ModelClass> modelClassList = new ArrayList<>();
     SelectionAdapter selectionAdapter;
     SelectItemsToSendFragment selectItemsToSendFragment;
+    TextView textView;
     static Stack<List<ModelClass>> listStackFiles = new Stack<>();
     static Stack<List<ModelClass>> listStackImages = new Stack<>();
+    static MutableLiveData<String> imagespath=new MutableLiveData<>();
    static int i=-1;
     ProgressBar progressBar;
+    Toolbar toolbar;
 
     public SelectionCategoriesFragment(String extra, SelectItemsToSendFragment fragment) {
         Log.d("positionextra", String.valueOf(extra));
@@ -348,6 +355,11 @@ public class SelectionCategoriesFragment extends Fragment {
                         }
                         selectionAdapter.submitList(listStackFiles.peek());
                     }
+                    else {
+                        setEnabled(false);
+                        if (getActivity() != null)
+                            getActivity().onBackPressed();
+                    }
                 }
                 if (listStackFiles.size() == 0) {
                     setEnabled(false);
@@ -392,11 +404,18 @@ public class SelectionCategoriesFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_selection_categories, container, false);
         RecyclerView recyclerView = v.findViewById(R.id.recyclerforcategoryselection);
+        textView=v.findViewById(R.id.showpathtextview);
         LinearLayoutManager staggeredGridLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(staggeredGridLayoutManager);
-        selectionAdapter = new SelectionAdapter(getContext(), selectItemsToSendFragment, extra);
+        selectionAdapter = new SelectionAdapter(this, selectItemsToSendFragment, extra);
         recyclerView.setAdapter(selectionAdapter);
         progressBar = v.findViewById(R.id.itemsloadingprogressbar);
+
+        if(extra.equals("images") || extra.equals("others")){
+            textView.setVisibility(View.VISIBLE);
+        }
+        else textView.setVisibility(View.GONE);
+
         return v;
     }
 
@@ -427,7 +446,7 @@ public class SelectionCategoriesFragment extends Fragment {
 
                     if (extra.equals("others") || extra.equals("images"))
                         selectionAdapter.submit(modelClassList,extra);
-                    else selectionAdapter.submitList(modelClassList);
+                   if(extra.equals("video") || extra.equals("audio") || extra.equals("app")) selectionAdapter.submitList(modelClassList);
                 }
 
             }

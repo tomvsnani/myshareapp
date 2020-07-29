@@ -316,10 +316,10 @@ public class FileTransferService extends Service {
 
 
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesSendReceivedTextview.setText( filesSentCounter);
+                        fileProgressFragment.filesSendReceivedTextview.setText(String.valueOf( filesSentCounter));
 
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesRemainingTextview.setText( remainingFilesCounter);
+                        fileProgressFragment.filesRemainingTextview.setText( String.valueOf( remainingFilesCounter));
                 }
             });
     }
