@@ -1,5 +1,7 @@
 package com.example.mysharecare;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -99,15 +101,31 @@ public class MainActivity extends AppCompatActivity {
         wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            showAlertDialog();
-        } else {
-            removeGroupandDiscoverPeers();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Toast.makeText(this, "Please allow Location Permissions", Toast.LENGTH_LONG).show();
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
+            }
 
-            startDiscoveryDevices();
-
-            setupListeners();
         }
+        else {
+            if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                showAlertDialog();
+            } else {
+                removeGroupandDiscoverPeers();
+
+                startDiscoveryDevices();
+
+                setupListeners();
+            }
+        }
+
+
 
     }
 
@@ -126,14 +144,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     private boolean turnOnWifi(WifiManager wifiManager) {
-
-
         Toast.makeText(MainActivity.this, "Please turn on wlan", Toast.LENGTH_SHORT).show();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             Intent intent = new Intent(Settings.Panel.ACTION_WIFI);
             startActivity(intent);
         }
-
         return wifiManager.isWifiEnabled();
     }
 
@@ -164,7 +179,8 @@ public class MainActivity extends AppCompatActivity {
         WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("_test", "_presence._tcp"
                 , map);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            Toast.makeText(this, "Please allow location permission", Toast.LENGTH_SHORT).show();
+            return;
 
         }
         wifiP2pManager.addLocalService(channel, wifiP2pDnsSdServiceInfo, new WifiP2pManager.ActionListener() {
@@ -238,6 +254,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Please allow location permission", Toast.LENGTH_SHORT).show();
+            return;
 
         }
         wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
@@ -436,8 +454,9 @@ public class MainActivity extends AppCompatActivity {
 
         private void onPeersChangedBroadcast(final Context context) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+                Toast.makeText(MainActivity.this, "Please allow location permission", Toast.LENGTH_SHORT).show();
                 return;
+
             }
             wifiP2pManager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
 
@@ -539,8 +558,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            Toast.makeText(this, "Please allow location permission", Toast.LENGTH_SHORT).show();
             return;
+
         }
         wifiP2pManager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
             @Override
@@ -565,11 +585,9 @@ public class MainActivity extends AppCompatActivity {
     private void startDiscoveryDevices() {
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            Toast.makeText(MainActivity.this, "No permission", Toast.LENGTH_SHORT).show();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
+            Toast.makeText(this, "Please allow location permission", Toast.LENGTH_SHORT).show();
             return;
+
         }
         wifiP2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
@@ -809,5 +827,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         super.onDestroy();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode==1){
+            if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    showAlertDialog();
+                } else {
+                    removeGroupandDiscoverPeers();
+
+                    startDiscoveryDevices();
+
+                    setupListeners();
+                }
+            }
+            else {
+                Toast.makeText(this, "Location permissions are needed . Please allow location permissions", Toast.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }
