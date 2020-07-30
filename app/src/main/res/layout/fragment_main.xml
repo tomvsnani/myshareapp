@@ -13,36 +13,37 @@
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:id="@+id/mainactivitytoolbar"/>
+            android:id="@+id/mainactivitytoolbar">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="18sp"
+                android:id="@+id/findingdevicestextview"/>
+        </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="wifi!"
-        android:id="@+id/wifionofftextview"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/finddevices"
-        android:text="search for devices"
-        />
-
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="3442"
-        android:padding="20dp"
-        android:id="@+id/message"
-        />
+        android:layout_margin="8dp"
+        android:id="@+id/searchfordevicesbutton"
+        android:visibility="gone"
+        android:textColor="#ffffff"
+        android:padding="8dp"
+        android:text="Search again ?"
+        android:background="@drawable/sendingfilesdrawable"/>
+ <TextView
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:layout_margin="16dp"
+     android:padding="8dp"
+     android:textSize="18sp"
+     android:visibility="gone"
+     android:id="@+id/showconnectmessageTextview"
+     android:text="Click on the device you want to connect to ."/>
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:id="@+id/listview"
         />
 

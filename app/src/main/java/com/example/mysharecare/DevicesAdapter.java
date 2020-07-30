@@ -99,6 +99,7 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
                             }
                         });
                     }
+                    else
                     connectToDevice(wifiP2pDevice);
 
                 }
@@ -111,6 +112,7 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
         wifiP2pConfig.deviceAddress = wifiP2pDevice.deviceAddress;
         wifiP2pConfig.groupOwnerIntent = 15;
         wifiP2pConfig.wps.setup = WpsInfo.PBC;
+        Log.d("deviceadap","yess");
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 

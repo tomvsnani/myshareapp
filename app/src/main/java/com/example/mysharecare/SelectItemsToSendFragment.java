@@ -51,15 +51,15 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
         selectedItemsCountButton = v.findViewById(R.id.selecteditemsbutton);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
-        viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                if (position == 3 || position == 4) {
-                    SelectionCategoriesFragment.i = position;
-                }
-                super.onPageSelected(position);
-            }
-        });
+//        viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+//            @Override
+//            public void onPageSelected(int position) {
+//                if (position == 3 || position == 4) {
+//                    SelectionCategoriesFragment.i = position;
+//                }
+//                super.onPageSelected(position);
+//            }
+//        });
         new TabLayoutMediator(tableLayout, viewPager2, new TabLayoutMediator.TabConfigurationStrategy() {
             @Override
             public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {

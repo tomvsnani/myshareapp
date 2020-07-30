@@ -44,7 +44,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     SelectionCategoriesFragment selectionCategoriesFragment;
     MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
     List<Integer> selectedList = new ArrayList<>();
-    static MutableLiveData<String> path=new MutableLiveData<>();
+    String path = "";
 
     protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type) {
         super(modelClassItemCallback);
@@ -181,7 +181,6 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                     final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
                     Log.d("enteredd", modelClass.getUri());
                     if (type.equals("others")) {
-                        path.setValue(path.getValue()+modelClass.getName()+" > ");
 
                         File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
                         if (file.isDirectory()) {
@@ -208,7 +207,9 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                 modelClassList.add(modelClassInner);
 
                             }
-                            submit(modelClassList, "others");
+                            PathModel pathModel = new PathModel(modelClassList, modelClass.getName());
+                            selectionCategoriesFragment.modelList.add(pathModel);
+                            submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
                         } else {
                             Log.d("filesize", String.valueOf(file.length()));
 
@@ -217,8 +218,10 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                         }
 
                     } else if (modelClass.getType().equals("album")) {
-                        path.setValue(path.getValue()+modelClass.getName()+" > ");
+
                         final ArrayList<ModelClass> modelClassList = new ArrayList<>();
+                        //  final List<PathModel> pathModelList=selectionCategoriesFragment.modelList;
+
 
                         Thread thread = new Thread(new Runnable() {
                             @Override
@@ -256,7 +259,9 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     modelClass.setId(idd);
                                     modelClassList.add(modelClass);
                                 }
-                                submit(modelClassList, "images");
+                                PathModel pathModel = new PathModel(modelClassList, modelClass.getName());
+                                selectionCategoriesFragment.modelList.add(pathModel);
+                                submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
 
                             }
                         });
@@ -310,12 +315,12 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
     }
 
-    public void submit(List<ModelClass> list, String extra) {
-        if (extra.equals("others"))
-            SelectionCategoriesFragment.listStackFiles.push(list);
-        if (extra.equals("images"))
-            SelectionCategoriesFragment.listStackImages.push(list);
-        submitList(list);
+    public void submit(PathModel pathModel, List<PathModel> modelList, List<ModelClass> modelClassList) {
+
+        selectionCategoriesFragment.pathAdapter.submitList(modelList);
+
+        selectionCategoriesFragment.listStackFiles.push(pathModel);
+        submitList(modelClassList);
 
     }
 

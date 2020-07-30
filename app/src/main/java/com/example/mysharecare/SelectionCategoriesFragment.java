@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -43,13 +41,13 @@ public class SelectionCategoriesFragment extends Fragment {
     List<ModelClass> modelClassList = new ArrayList<>();
     SelectionAdapter selectionAdapter;
     SelectItemsToSendFragment selectItemsToSendFragment;
-    TextView textView;
-    static Stack<List<ModelClass>> listStackFiles = new Stack<>();
-    static Stack<List<ModelClass>> listStackImages = new Stack<>();
-    static MutableLiveData<String> imagespath=new MutableLiveData<>();
-   static int i=-1;
+    RecyclerView recyclerview;
+    Stack<PathModel> listStackFiles = new Stack<>();
+    static int i = -1;
     ProgressBar progressBar;
     Toolbar toolbar;
+    DisplayPathAdapter pathAdapter;
+    List<PathModel> modelList = new ArrayList<>();
 
     public SelectionCategoriesFragment(String extra, SelectItemsToSendFragment fragment) {
         Log.d("positionextra", String.valueOf(extra));
@@ -266,7 +264,7 @@ public class SelectionCategoriesFragment extends Fragment {
                                     MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
                                     MediaStore.Images.Media._ID,
                                     MediaStore.Images.Media.BUCKET_ID
-                                    ,MediaStore.Images.Media.DATA
+                                    , MediaStore.Images.Media.DATA
 
                             };
 
@@ -334,28 +332,29 @@ public class SelectionCategoriesFragment extends Fragment {
         getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                Log.d("positionextraa",String.valueOf(i));
-                if(i==3)
-                    handleBackstack(listStackImages);
-                if(i==4)
+              //  Log.d("positionextraa", String.valueOf(i));
 
-                handleBackstack(listStackFiles);
+
+                    handleBackstack(listStackFiles);
 
             }
 
-            private void handleBackstack(Stack<List<ModelClass>> listStackFiles) {
+            private void handleBackstack(Stack<PathModel> listStackFiles) {
                 Log.d("backpressed", String.valueOf(listStackFiles.size()));
 
                 if (listStackFiles.size() != 0) {
-                    listStackFiles.pop();
+                    modelList.remove(listStackFiles.pop());
+
                     if (!listStackFiles.isEmpty()) {
                         if (listStackFiles.size() == 1) {
                             Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
 
                         }
-                        selectionAdapter.submitList(listStackFiles.peek());
-                    }
-                    else {
+                        PathModel pathModel=listStackFiles.peek();
+                        selectionAdapter.submitList(pathModel.getList());
+                        //modelList.remove(pathModel);
+                        pathAdapter.submitList(modelList);
+                    } else {
                         setEnabled(false);
                         if (getActivity() != null)
                             getActivity().onBackPressed();
@@ -404,17 +403,21 @@ public class SelectionCategoriesFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_selection_categories, container, false);
         RecyclerView recyclerView = v.findViewById(R.id.recyclerforcategoryselection);
-        textView=v.findViewById(R.id.showpathtextview);
+        recyclerview = v.findViewById(R.id.showpathrecyclerview);
         LinearLayoutManager staggeredGridLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(staggeredGridLayoutManager);
         selectionAdapter = new SelectionAdapter(this, selectItemsToSendFragment, extra);
         recyclerView.setAdapter(selectionAdapter);
         progressBar = v.findViewById(R.id.itemsloadingprogressbar);
+        RecyclerView recyclerView1 = v.findViewById(R.id.showpathrecyclerview);
+        recyclerView1.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        pathAdapter = new DisplayPathAdapter();
+        recyclerView1.setAdapter(pathAdapter);
 
-        if(extra.equals("images") || extra.equals("others")){
-            textView.setVisibility(View.VISIBLE);
-        }
-        else textView.setVisibility(View.GONE);
+
+        if (extra.equals("images") || extra.equals("others")) {
+            recyclerview.setVisibility(View.VISIBLE);
+        } else recyclerview.setVisibility(View.GONE);
 
         return v;
     }
@@ -444,9 +447,13 @@ public class SelectionCategoriesFragment extends Fragment {
                     } else if (!extra.equals("images"))
                         sortList();
 
-                    if (extra.equals("others") || extra.equals("images"))
-                        selectionAdapter.submit(modelClassList,extra);
-                   if(extra.equals("video") || extra.equals("audio") || extra.equals("app")) selectionAdapter.submitList(modelClassList);
+                    if (extra.equals("others") || extra.equals("images")) {
+                        PathModel pathModel = new PathModel(modelClassList, "Home");
+                        modelList.add(pathModel);
+                        selectionAdapter.submit(pathModel, modelList, modelClassList);
+                    }
+                    if (extra.equals("video") || extra.equals("audio") || extra.equals("app"))
+                        selectionAdapter.submitList(modelClassList);
                 }
 
             }
@@ -464,5 +471,7 @@ public class SelectionCategoriesFragment extends Fragment {
             }
         });
     }
+
+
 }
 

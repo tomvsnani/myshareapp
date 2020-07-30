@@ -1,94 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".FileProgressFragment">
+
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize">
+        android:layout_height="?attr/actionBarSize"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
         <androidx.appcompat.widget.Toolbar
+            android:id="@+id/fileprogressfragmenttoolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:theme="@style/BackNavigationIndicator"
-            android:id="@+id/fileprogressfragmenttoolbar">
-          <LinearLayout
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:orientation="horizontal">
-              <TextView
-                  android:id="@+id/sendingextview"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="Sending Files :"
-                  android:textColor="#ffffff"
-                  android:textSize="18sp" />
-              <TextView
-                  android:id="@+id/sentfilestextview"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text=" 2 /"
-                  android:textColor="#ffffff"
-                  android:textSize="18sp" />
-              <TextView
-                  android:id="@+id/remainingfilesextview"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="3"
-                  android:textColor="#ffffff"
-                  android:textSize="18sp" />
-          </LinearLayout>
+            android:theme="@style/BackNavigationIndicator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/sendingextview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sending Files :"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/sentfilestextview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" 2 /"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/remainingfilesextview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp" />
+            </LinearLayout>
 
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/coordinatorLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/sendingfilesdrawable">
+        android:layout_marginTop="?attr/actionBarSize"
+        android:background="@drawable/sendingfilesdrawable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
         <ProgressBar
             android:id="@+id/totalfilessendingprogressbar"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:alpha="0.2"
-            android:scaleY="200"
-            android:progress="50"
             android:background="@drawable/sendingfilesdrawable"
-            android:progressTint="#8C8CBB" />
-        <LinearLayout
-            android:layout_width="match_parent"
+            android:progress="50"
+            android:progressTint="#8C8CBB"
+            android:scaleY="200" />
+
+
+        <TextView
+            android:id="@+id/timeremailingsextview"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:orientation="vertical"
-
-            >
-
-
-
-
-
-            <TextView
-                android:id="@+id/timeremailingsextview"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:text="Time Remaining"
-                android:textColor="#ffffff"
-                android:textSize="18sp" />
-
-        </LinearLayout>
-
+            android:layout_margin="16dp"
+            android:text="Time Remaining"
+            android:textColor="#ffffff"
+            android:textSize="18sp" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <!-- TODO: Update blank fragment layout -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/sendingfilesrecyclerview" />
 
-</LinearLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/sendingfilesrecyclerview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toTopOf="@+id/canceltransferbutton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/coordinatorLayout" />
+
+    <Button
+        android:id="@+id/canceltransferbutton"
+        android:layout_width="88dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/buttonshape"
+        android:text="Cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

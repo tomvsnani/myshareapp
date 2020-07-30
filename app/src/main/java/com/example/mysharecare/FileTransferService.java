@@ -186,7 +186,6 @@ public class FileTransferService extends Service {
                     }
 
                     filesSentCounter++;
-                    remainingFilesCounter--;
                     updateFilesSentReceivedViews();
                 }
 
@@ -287,7 +286,7 @@ public class FileTransferService extends Service {
                     }
                 }
                 filesSentCounter++;
-                remainingFilesCounter--;
+
                 updateFilesSentReceivedViews();
 
             }
@@ -316,7 +315,7 @@ public class FileTransferService extends Service {
 
 
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesSendReceivedTextview.setText(String.valueOf( filesSentCounter));
+                        fileProgressFragment.filesSendReceivedTextview.setText(String.valueOf( " "+filesSentCounter+"/"));
 
                     if (fileProgressFragment != null)
                         fileProgressFragment.filesRemainingTextview.setText( String.valueOf( remainingFilesCounter));
