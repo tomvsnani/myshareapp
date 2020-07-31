@@ -9,31 +9,36 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 public class ViewPgaerAdapter extends FragmentStateAdapter {
 
-SelectItemsToSendFragment fragment;
+    SelectItemsToSendFragment fragment;
+
     public ViewPgaerAdapter(@NonNull Fragment fragmentActivity) {
 
-      super(fragmentActivity);
-        this.fragment= (SelectItemsToSendFragment) fragmentActivity;
+        super(fragmentActivity);
+        this.fragment = (SelectItemsToSendFragment) fragmentActivity;
     }
 
     @Override
     public Fragment createFragment(int position) {
-        String extra="";
-        Log.d("positionada", String.valueOf(position));
-        switch (position){
-            case 0:extra="app";
+        String extra = "";
+
+        switch (position) {
+            case 0:
+                extra = AppConstants.Apps;
                 break;
-            case 1:extra="video";
+            case 1:
+                extra = AppConstants.Videos;
                 break;
-            case 2:extra="audio";
+            case 2:
+                extra = AppConstants.Audios;
                 break;
-            case 3:extra="images";
+            case 3:
+                extra = AppConstants.Images;
                 break;
-            case 4:extra="others";
-            break;
+            case 4:
+                extra = AppConstants.Files;
+                break;
         }
-        SelectionCategoriesFragment selectionCategoriesFragment=new SelectionCategoriesFragment(extra,fragment);
-        return selectionCategoriesFragment;
+        return new SelectionCategoriesFragment(extra, fragment);
 
     }
 

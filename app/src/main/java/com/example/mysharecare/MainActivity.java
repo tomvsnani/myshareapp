@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         final String extra = getIntent().getStringExtra(AppConstants.SENDRECEIVEEXTRA);
-        modelClassList = (List<ModelClass>) getIntent().getSerializableExtra("sendItems");
+        modelClassList = (List<ModelClass>) getIntent().getSerializableExtra(AppConstants.SEND_MODEL_LIST_EXTRA);
         isReceiver = (extra != null && extra.equals(AppConstants.RECEIVE));
         mainFragment = new MainFragment(isReceiver, modelClassList);
         getSupportFragmentManager().beginTransaction()

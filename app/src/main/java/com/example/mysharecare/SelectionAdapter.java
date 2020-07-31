@@ -88,7 +88,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
         holder.nametextview.setText(modelClass.getName());
 
-        if (selectedList.contains(position) && !(modelClass.getType().equals("dir") || modelClass.getType().equals("album"))) {
+        if (selectedList.contains(position) && !(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
 
             holder.linearLayout.setBackground(context.getResources().getDrawable(R.drawable.buttonshape));
 
@@ -97,7 +97,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
         }
 
         holder.sizeTextView.setText(String.format("%.1f Mb", (double) (modelClass.getSize()) / 1000000));
-        if (!(modelClass.getType().equals("dir") || modelClass.getType().equals("album"))) {
+        if (!(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
             holder.sizeTextView.setVisibility(View.VISIBLE);
         } else holder.sizeTextView.setVisibility(View.GONE);
 
@@ -105,8 +105,9 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
         if (modelClass.getBytes() != null && modelClass.getBytes().length > 0)
             Glide.with(context).load(getImageFromBytes(modelClass)).into(holder.iconimageview);
 
-        if (modelClass.getType().equals("audio") || modelClass.getType().equals("video") || modelClass.getType().equals("image") ||
-                modelClass.getType().equals("album")) {
+        if (modelClass.getType().equals(AppConstants.Audios)
+                || modelClass.getType().equals(AppConstants.Videos) || modelClass.getType().equals(AppConstants.Images) ||
+                modelClass.getType().equals(AppConstants.Albums)) {
 
             getBitmap(modelClass, holder);
         }
@@ -117,7 +118,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (!modelClass.getType().equals("audio")) {
+            if (!modelClass.getType().equals(AppConstants.Audios)) {
                 try {
 
 
@@ -138,7 +139,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
         //////// versions below android 10 ////
         else {
 
-            if (modelClass.getType().equals("image") || modelClass.getType().equals("album")) {
+            if (modelClass.getType().equals(AppConstants.Images) || modelClass.getType().equals(AppConstants.Albums)) {
                 Bitmap bitmap = MediaStore.Images.Thumbnails.getThumbnail(context.getContentResolver()
                         , modelClass.getId(), MediaStore.Images.Thumbnails.MICRO_KIND, null);
                 Glide.with(context)
@@ -146,7 +147,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                         .into(holder.iconimageview);
 
             }
-            if (modelClass.getType().equals("video")) {
+            if (modelClass.getType().equals(AppConstants.Videos)) {
 
                 Glide.with(context)
                         .load(MediaStore.Video.Thumbnails.getThumbnail(context.getContentResolver(), modelClass.getId()
@@ -155,7 +156,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
             }
         }
-        if (modelClass.getType().equals("audio"))
+        if (modelClass.getType().equals(AppConstants.Audios))
             Glide.with(context).load(R.drawable.ic_baseline_music_note_24).into(holder.iconimageview);
 
     }
@@ -182,7 +183,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                 public void onClick(View view) {
                     final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
                     Log.d("enteredd", modelClass.getUri());
-                    if (type.equals("others")) {
+                    if (type.equals(AppConstants.Files)) {
 
                         File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
                         if (file.isDirectory()) {
@@ -197,11 +198,11 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                 if (!g.isFile()) {
                                     modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
                                             .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
-                                    modelClassInner.setType("dir");
+                                    modelClassInner.setType(AppConstants.Directory);
                                 } else {
                                     modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
                                             .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
-                                    modelClassInner.setType("others");
+                                    modelClassInner.setType(AppConstants.Files);
 
                                     Log.d("filesize", String.valueOf(g.length()));
                                 }
@@ -219,7 +220,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
                         }
 
-                    } else if (modelClass.getType().equals("album")) {
+                    } else if (modelClass.getType().equals(AppConstants.Albums)) {
 
                         final ArrayList<ModelClass> modelClassList = new ArrayList<>();
                         //  final List<PathModel> pathModelList=selectionCategoriesFragment.modelList;
@@ -257,7 +258,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     } else
                                         modelClass.setUri(urii);
                                     modelClass.setSize(sizee);
-                                    modelClass.setType("image");
+                                    modelClass.setType(AppConstants.Images);
                                     modelClass.setId(idd);
                                     modelClassList.add(modelClass);
                                 }

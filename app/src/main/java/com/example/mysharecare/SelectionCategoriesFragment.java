@@ -50,7 +50,6 @@ public class SelectionCategoriesFragment extends Fragment {
     List<PathModel> modelList = new ArrayList<>();
 
     public SelectionCategoriesFragment(String extra, SelectItemsToSendFragment fragment) {
-        Log.d("positionextra", String.valueOf(extra));
         this.extra = extra;
         this.selectItemsToSendFragment = fragment;
 
@@ -61,13 +60,13 @@ public class SelectionCategoriesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         listStackFiles.empty();
-        Log.d("positionextrac", String.valueOf(extra));
+
     }
 
     private void retrieveFiles() {
 
         switch (extra) {
-            case "app": {
+            case AppConstants.Apps: {
                 if (modelClassList.size() == 0) {
 
                     Thread thread = new Thread(new Runnable() {
@@ -75,8 +74,8 @@ public class SelectionCategoriesFragment extends Fragment {
                         public void run() {
                             progressBar.setVisibility(View.VISIBLE);
 
-                                  List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
-                               for (final ApplicationInfo resolveInfo : applicationInfoList) {
+                            List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
+                            for (final ApplicationInfo resolveInfo : applicationInfoList) {
                                 if ((resolveInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
                                     continue;
                                 }
@@ -114,7 +113,7 @@ public class SelectionCategoriesFragment extends Fragment {
             break;
 
 
-            case "audio": {
+            case AppConstants.Audios: {
                 if (modelClassList.size() == 0) {
                     Thread thread = new Thread(new Runnable() {
                         @Override
@@ -167,7 +166,7 @@ public class SelectionCategoriesFragment extends Fragment {
             break;
 
 
-            case "video": {
+            case AppConstants.Videos: {
                 if (modelClassList.size() == 0) {
                     Thread thread = new Thread(new Runnable() {
                         @Override
@@ -221,7 +220,7 @@ public class SelectionCategoriesFragment extends Fragment {
             break;
 
 
-            case "others": {
+            case AppConstants.Files: {
                 if (modelClassList.size() == 0) {
                     File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
                     Log.d("filecontents", "s");
@@ -234,11 +233,11 @@ public class SelectionCategoriesFragment extends Fragment {
                         if (!g.isFile()) {
                             modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
                                     .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
-                            modelClass.setType("dir");
+                            modelClass.setType(AppConstants.Directory);
                         } else {
                             modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
                                     .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
-                            modelClass.setType("others");
+                            modelClass.setType(AppConstants.Files);
 
                         }
                         modelClassList.add(modelClass);
@@ -255,7 +254,7 @@ public class SelectionCategoriesFragment extends Fragment {
                 }
             }
             break;
-            case "images": {
+            case AppConstants.Images: {
                 if (modelClassList.size() == 0) {
                     Thread thread = new Thread(new Runnable() {
                         @Override
@@ -302,7 +301,7 @@ public class SelectionCategoriesFragment extends Fragment {
                                         modelClass.setUri(uri.toString());
                                     } else modelClass.setUri(dataa);
 
-                                    modelClass.setType("album");
+                                    modelClass.setType(AppConstants.Albums);
 
                                     modelClass.setId(idd);
                                     modelClass.setBucketId(bucketIdd);
@@ -332,10 +331,10 @@ public class SelectionCategoriesFragment extends Fragment {
         getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-              //  Log.d("positionextraa", String.valueOf(i));
+                //  Log.d("positionextraa", String.valueOf(i));
 
 
-                    handleBackstack(listStackFiles);
+                handleBackstack(listStackFiles);
 
             }
 
@@ -350,7 +349,7 @@ public class SelectionCategoriesFragment extends Fragment {
                             Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
 
                         }
-                        PathModel pathModel=listStackFiles.peek();
+                        PathModel pathModel = listStackFiles.peek();
                         selectionAdapter.submitList(pathModel.getList());
                         //modelList.remove(pathModel);
                         pathAdapter.submitList(modelList);
@@ -415,7 +414,7 @@ public class SelectionCategoriesFragment extends Fragment {
         recyclerView1.setAdapter(pathAdapter);
 
 
-        if (extra.equals("images") || extra.equals("others")) {
+        if (extra.equals(AppConstants.Images) || extra.equals(AppConstants.Files)) {
             recyclerview.setVisibility(View.VISIBLE);
         } else recyclerview.setVisibility(View.GONE);
 
@@ -426,8 +425,8 @@ public class SelectionCategoriesFragment extends Fragment {
     public void onStart() {
 
         super.onStart();
-        if(getActivity()!=null)
-        retrieveFiles();
+        if (getActivity() != null)
+            retrieveFiles();
 
     }
 
@@ -436,24 +435,24 @@ public class SelectionCategoriesFragment extends Fragment {
             @Override
             public void run() {
                 if (modelClassList.size() > 0) {
-                    if (extra.equals("others")) {
+                    if (extra.equals(AppConstants.Files)) {
                         sortList();
                         Collections.sort(modelClassList, new Comparator<ModelClass>() {
                             @Override
                             public int compare(ModelClass modelClass, ModelClass t1) {
-                                return modelClass.getType().compareTo(t1.getType());
+                                return t1.getType().compareTo(modelClass.getType());
                             }
                         });
 
-                    } else if (!extra.equals("images"))
+                    } else if (!extra.equals(AppConstants.Images))
                         sortList();
 
-                    if (extra.equals("others") || extra.equals("images")) {
+                    if (extra.equals(AppConstants.Files) || extra.equals(AppConstants.Images)) {
                         PathModel pathModel = new PathModel(modelClassList, "Home");
                         modelList.add(pathModel);
                         selectionAdapter.submit(pathModel, modelList, modelClassList);
                     }
-                    if (extra.equals("video") || extra.equals("audio") || extra.equals("app"))
+                    if (extra.equals(AppConstants.Videos) || extra.equals(AppConstants.Audios) || extra.equals(AppConstants.Apps))
                         selectionAdapter.submitList(modelClassList);
                 }
 

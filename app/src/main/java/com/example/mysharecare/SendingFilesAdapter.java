@@ -66,13 +66,13 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
 
             holder.iconimageview.setImageBitmap(getImageFromBytes(modelClass));
 
-        if(modelClass.getType().equals("audio"))
+        if(modelClass.getType().equals(AppConstants.Audios))
             Glide.with(context).load(R.drawable.ic_baseline_music_note_24).into(holder.iconimageview);
 
-        if(modelClass.getType().equals("video"))
+        if(modelClass.getType().equals(AppConstants.Videos))
             Glide.with(context).load(R.drawable.ic_baseline_movie_filter_24).into(holder.iconimageview);
 
-        if(modelClass.getType().equals("image"))
+        if(modelClass.getType().equals(AppConstants.Images))
             Glide.with(context).load(R.drawable.ic_baseline_image_24).into(holder.iconimageview);
 
         if (progressValue.size() > 0)

@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.MutableLiveData;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.util.Log;
@@ -20,7 +19,6 @@ import android.widget.Toast;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,15 +49,7 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
         selectedItemsCountButton = v.findViewById(R.id.selecteditemsbutton);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
-//        viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-//            @Override
-//            public void onPageSelected(int position) {
-//                if (position == 3 || position == 4) {
-//                    SelectionCategoriesFragment.i = position;
-//                }
-//                super.onPageSelected(position);
-//            }
-//        });
+//
         new TabLayoutMediator(tableLayout, viewPager2, new TabLayoutMediator.TabConfigurationStrategy() {
             @Override
             public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
@@ -67,22 +57,22 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
                 switch (position) {
 
                     case 0:
-                        tab.setText("Apps");
+                        tab.setText(AppConstants.Apps);
                         break;
                     case 1:
-                        tab.setText("Videos");
+                        tab.setText(AppConstants.Videos);
                         tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
                     case 2:
-                        tab.setText("Audio");
+                        tab.setText(AppConstants.Audios);
                         tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
                     case 3:
-                        tab.setText("Images");
+                        tab.setText(AppConstants.Images);
                         tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
                     case 4:
-                        tab.setText("Files");
+                        tab.setText(AppConstants.Files);
                         tab.setTabLabelVisibility(TabLayout.TAB_LABEL_VISIBILITY_LABELED);
                         break;
 
@@ -110,7 +100,7 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
                 if (modelClassList.size() > 0) {
                     Intent intent = new Intent(getActivity(), MainActivity.class);
 
-                    intent.putExtra("sendItems", (Serializable) modelClassList);
+                    intent.putExtra(AppConstants.SEND_MODEL_LIST_EXTRA, (Serializable) modelClassList);
                     startActivity(intent);
                 } else
                     Toast.makeText(getContext(), "Please select items to send .", Toast.LENGTH_SHORT).show();
