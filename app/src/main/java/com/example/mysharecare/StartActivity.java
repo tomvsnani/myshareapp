@@ -26,7 +26,7 @@ public class StartActivity extends AppCompatActivity {
                 || this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
-        getSupportFragmentManager().beginTransaction().add(R.id.startcontainer, new StartingFragment()).addToBackStack(null).commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.startcontainer, new StartingFragment()).commit();
 
     }
 

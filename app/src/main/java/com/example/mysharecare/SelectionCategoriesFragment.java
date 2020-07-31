@@ -65,6 +65,7 @@ public class SelectionCategoriesFragment extends Fragment {
     }
 
     private void retrieveFiles() {
+
         switch (extra) {
             case "app": {
                 if (modelClassList.size() == 0) {
@@ -73,10 +74,9 @@ public class SelectionCategoriesFragment extends Fragment {
                         @Override
                         public void run() {
                             progressBar.setVisibility(View.VISIBLE);
-                            //   List<ResolveInfo> resolveInfos = getActivity().getPackageManager().queryIntentActivities(intent, 0);
-                            List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
-                            //   Collections.sort(applicationInfoList,new ApplicationInfo.DisplayNameComparator(getActivity().getPackageManager()));
-                            for (final ApplicationInfo resolveInfo : applicationInfoList) {
+
+                                  List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
+                               for (final ApplicationInfo resolveInfo : applicationInfoList) {
                                 if ((resolveInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
                                     continue;
                                 }
@@ -426,6 +426,7 @@ public class SelectionCategoriesFragment extends Fragment {
     public void onStart() {
 
         super.onStart();
+        if(getActivity()!=null)
         retrieveFiles();
 
     }

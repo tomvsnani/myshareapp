@@ -80,28 +80,15 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
             linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    int i=getAdapterPosition();
                     Toast.makeText(context, "clicked", Toast.LENGTH_SHORT).show();
-                    final WifiP2pDevice wifiP2pDevice = getCurrentList().get(getAdapterPosition());
-                    if (wifiP2pDevice.status == WifiP2pDevice.CONNECTED) {
-                        linearLayout.setClickable(false);
+                    if(i!=RecyclerView.NO_POSITION) {
+                        final WifiP2pDevice wifiP2pDevice = getCurrentList().get(i);
+                        if (wifiP2pDevice.status == WifiP2pDevice.CONNECTED) {
+                            linearLayout.setClickable(false);
+                        }
+                        connectToDevice(wifiP2pDevice);
                     }
-
-                    if (wifiP2pDevice.status == WifiP2pDevice.FAILED) {
-                        wifiP2pManager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                                connectToDevice(wifiP2pDevice);
-                            }
-
-                            @Override
-                            public void onFailure(int i) {
-                                connectToDevice(wifiP2pDevice);
-                            }
-                        });
-                    }
-                    else
-                    connectToDevice(wifiP2pDevice);
-
                 }
             });
         }

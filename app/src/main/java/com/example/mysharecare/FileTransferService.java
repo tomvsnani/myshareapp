@@ -1,9 +1,11 @@
 package com.example.mysharecare;
 
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.TrafficStats;
 import android.net.Uri;
@@ -24,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.Timer;
@@ -43,6 +46,13 @@ public class FileTransferService extends Service {
     boolean isTransferFinished = false;
     FileProgressFragment fileProgressFragment;
     IBinder iBinder = new LocalBinder();
+    DataInputStream dataInputStreamReceiver;
+    ObjectInputStream objectInputStreamReceiver;
+    FileOutputStream fileOutputStreamReceiver;
+    DataOutputStream dataOutputStream;
+    ObjectOutputStream objectOutputStream;
+    DataInputStream dataInputStream = null;
+
 
     @Nullable
     @Override
@@ -52,26 +62,96 @@ public class FileTransferService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction() != null && intent.getAction().equals("stop")) {
+            Log.d("stop received", "yess");
+            getApplicationContext().unbindService(fileProgressFragment.serviceConnection);
+            stopForeground(true);
+            stopSelf();
+
+        }
 
         return START_NOT_STICKY;
     }
 
+
+    public void closeConnections() throws IOException {
+        AlertDialog alertDialog;
+        final AlertDialog.Builder builder = new AlertDialog.Builder(fileProgressFragment.getContext());
+        builder.setMessage("Do you really want to close the connection ? ");
+        builder.setPositiveButton("Yes , close", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(final DialogInterface dialogInterface, int i) {
+
+                if (isReceiver) {
+                    try {
+                        closeConnectionsReceiver(dataInputStreamReceiver, objectInputStreamReceiver, fileOutputStreamReceiver);
+                        closewifidirectandSerice();
+                        Intent intent = new Intent(fileProgressFragment.getContext(), StartActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        fileProgressFragment.getActivity().startActivity(intent);
+                        dialogInterface.dismiss();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+
+                    try {
+                        closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
+                        closewifidirectandSerice();
+                        Intent intent = new Intent(fileProgressFragment.getContext(), StartActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getApplicationContext().startActivity(intent);
+                        dialogInterface.dismiss();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+
+                    }
+                }
+
+
+            }
+
+            private void closewifidirectandSerice() {
+                fileProgressFragment.wifiP2pManager.clearServiceRequests(fileProgressFragment.channel, null);
+                fileProgressFragment.wifiP2pManager.clearLocalServices(fileProgressFragment.channel, null);
+                fileProgressFragment.wifiP2pManager.removeGroup(fileProgressFragment.channel, null);
+
+                fileProgressFragment.getActivity().getApplicationContext().unbindService(fileProgressFragment.serviceConnection);
+                fileProgressFragment.getActivity().stopService(fileProgressFragment.intent);
+            }
+        });
+        builder.setNegativeButton("No ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        alertDialog = builder.create();
+        alertDialog.setCancelable(false);
+        alertDialog.show();
+
+    }
+
     private void startForegroundd() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel("1", "channel", NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel notificationChannel = new NotificationChannel("1", "channel", NotificationManager.IMPORTANCE_LOW);
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(notificationChannel);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "1");
             Intent intent = new Intent(this, FileTransferService.class);
-            intent.putExtra("start", "stop");
+            intent.setAction("stop");
             PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
             builder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0));
-            builder.addAction(R.drawable.ic_launcher_background, "stop", pendingIntent);
-            builder.setContentTitle("noti");
-            builder.setContentText("yess");
+            builder.addAction(R.drawable.ic_launcher_background, "Exit", pendingIntent);
+            builder.setContentTitle("Transferring files");
+            builder.setContentText("shareit");
             builder.setSmallIcon(R.drawable.ic_launcher_background);
-
             startForeground(1, builder.build());
+
         }
     }
 
@@ -88,6 +168,7 @@ public class FileTransferService extends Service {
         this.socket = socket;
         this.isReceiver = isReceiver;
         this.fileProgressFragment = serviceCallback;
+
 
         if (modelClassList != null)
             for (ModelClass modelClass : modelClassList) {
@@ -124,10 +205,10 @@ public class FileTransferService extends Service {
     private void initializeReceiving() {
         try {
 
-            final DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            FileOutputStream fileOutputStream = null;
-            modelClassList = (List<ModelClass>) objectInputStream.readObject();
+            dataInputStreamReceiver = new DataInputStream(socket.getInputStream());
+            objectInputStreamReceiver = new ObjectInputStream(socket.getInputStream());
+            fileOutputStreamReceiver = null;
+            modelClassList = (List<ModelClass>) objectInputStreamReceiver.readObject();
             if (modelClassList != null) {
                 if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
                     fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
@@ -137,7 +218,7 @@ public class FileTransferService extends Service {
                         }
                     });
                 int numOfFiles = modelClassList.size();
-                totalFilesSize = dataInputStream.readInt();
+                totalFilesSize = dataInputStreamReceiver.readInt();
                 fileProgressFragment.progressBar.setMax(totalFilesSize);
                 remainingFilesCounter = numOfFiles;
                 final Long startTime = System.currentTimeMillis();
@@ -154,14 +235,14 @@ public class FileTransferService extends Service {
                         file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
 
                     file.createNewFile();
-                    fileOutputStream = new FileOutputStream(file);
+                    fileOutputStreamReceiver = new FileOutputStream(file);
                     int j = 0;
                     int size = modelClass.getSize().intValue();
 
                     int eachFileSize = 0;
                     byte[] b = new byte[61440];
                     updateFilesSentReceivedViews();
-                    while ((j = dataInputStream.read(b, 0, Math.min(b.length, size))) > 0) {
+                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) > 0) {
                         Log.d("receivingpackets", "yesinwhile");
                         size = size - j;
                         fileSizeSent += j;
@@ -182,7 +263,8 @@ public class FileTransferService extends Service {
                                     fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSize);
                                 }
                             });
-                        fileOutputStream.write(b, 0, j);
+
+                        fileOutputStreamReceiver.write(b, 0, j);
                     }
 
                     filesSentCounter++;
@@ -190,7 +272,8 @@ public class FileTransferService extends Service {
                 }
 
                 calculateTimeElapsed(startTime);
-                closeConnectionsReceiver(dataInputStream, objectInputStream, fileOutputStream);
+                timer.cancel();
+
 
             }
         } catch (IOException e) {
@@ -203,12 +286,12 @@ public class FileTransferService extends Service {
 
     private void initializeSending() {
         try {
-            final DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             objectOutputStream.writeObject(modelClassList);
             dataOutputStream.writeInt(totalFilesSize);
             Uri uri = null;
-            DataInputStream dataInputStream = null;
+            dataInputStream = null;
 
             remainingFilesCounter = modelClassList.size();
             if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
@@ -292,7 +375,8 @@ public class FileTransferService extends Service {
             }
 
             calculateTimeElapsed(startTime);
-            closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
+            timer.cancel();
+            //closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -315,10 +399,10 @@ public class FileTransferService extends Service {
 
 
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesSendReceivedTextview.setText(String.valueOf( " "+filesSentCounter+"/"));
+                        fileProgressFragment.filesSendReceivedTextview.setText(String.valueOf(" " + filesSentCounter + "/"));
 
                     if (fileProgressFragment != null)
-                        fileProgressFragment.filesRemainingTextview.setText( String.valueOf( remainingFilesCounter));
+                        fileProgressFragment.filesRemainingTextview.setText(String.valueOf(remainingFilesCounter));
                 }
             });
     }

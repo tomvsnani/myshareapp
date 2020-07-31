@@ -18,6 +18,7 @@
             android:id="@+id/fileprogressfragmenttoolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_baseline_close_24"
             android:theme="@style/BackNavigationIndicator">
 
             <LinearLayout
@@ -89,15 +90,27 @@
 
     <!-- TODO: Update blank fragment layout -->
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/sendingfilesrecyclerview"
+    <androidx.cardview.widget.CardView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_margin="16dp"
+        android:fadingEdgeLength="20dp"
+        app:cardElevation="8dp"
         app:layout_constraintBottom_toTopOf="@+id/canceltransferbutton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/coordinatorLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/coordinatorLayout"
+        app:layout_constraintVertical_bias="0.0">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/sendingfilesrecyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_weight="1"
+            android:background="@drawable/recyclerviewelevationdrawable"
+            android:padding="8dp" />
+    </androidx.cardview.widget.CardView>
 
     <Button
         android:id="@+id/canceltransferbutton"

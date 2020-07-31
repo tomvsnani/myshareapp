@@ -43,7 +43,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     String type;
     SelectionCategoriesFragment selectionCategoriesFragment;
     MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
-    List<Integer> selectedList = new ArrayList<>();
+    static List<Integer> selectedList = new ArrayList<>();
     String path = "";
 
     protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type) {
@@ -57,6 +57,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
         selectedPosition.observeForever(new Observer<Integer>() {
             @Override
             public void onChanged(Integer integer) {
+                Log.d("integer",""+integer);
                 if (!selectedList.contains(integer)) {
                     selectedList.add(integer);
                     selectedItemsInterface.SelectedItemsCallback(getCurrentList().get(integer), true);
@@ -87,17 +88,18 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
         holder.nametextview.setText(modelClass.getName());
 
-        if (selectedList.contains(position)) {
+        if (selectedList.contains(position) && !(modelClass.getType().equals("dir") || modelClass.getType().equals("album"))) {
 
-            holder.linearLayout.setBackgroundColor(Color.RED);
+            holder.linearLayout.setBackground(context.getResources().getDrawable(R.drawable.buttonshape));
 
         } else {
             holder.linearLayout.setBackgroundColor(Color.TRANSPARENT);
         }
 
-
-        if (!modelClass.getType().equals("dir"))
-            holder.sizeTextView.setText(String.format("%.2f mb", (double) (modelClass.getSize()) / 1000000));
+        holder.sizeTextView.setText(String.format("%.1f Mb", (double) (modelClass.getSize()) / 1000000));
+        if (!(modelClass.getType().equals("dir") || modelClass.getType().equals("album"))) {
+            holder.sizeTextView.setVisibility(View.VISIBLE);
+        } else holder.sizeTextView.setVisibility(View.GONE);
 
 
         if (modelClass.getBytes() != null && modelClass.getBytes().length > 0)
