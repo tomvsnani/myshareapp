@@ -115,7 +115,7 @@ public class Repository {
                 modelClass.setUri(uri.toString());
             } else modelClass.setUri(dataa);
             modelClass.setSize(sizee);
-            modelClass.setType(extra);
+            modelClass.setType(AppConstants.Videos);
             modelClass.setId(idd);
             modelClassListVideos.add(modelClass);
         }
@@ -150,7 +150,7 @@ public class Repository {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 modelClass.setUri(uri.toString());
             } else modelClass.setUri(dataa);
-            modelClass.setType(extra);
+            modelClass.setType(AppConstants.Audios);
             modelClass.setId(idd);
             modelClass.setSize(sizee);
             modelClassListAudios.add(modelClass);
@@ -180,7 +180,7 @@ public class Repository {
             });
             thread1.start();
             modelClass.setUri(s);
-            modelClass.setType(extra);
+            modelClass.setType(AppConstants.Apps);
             modelClass.setSize(new File(resolveInfo.publicSourceDir).length());
             modelClassListApps.add(modelClass);
         }

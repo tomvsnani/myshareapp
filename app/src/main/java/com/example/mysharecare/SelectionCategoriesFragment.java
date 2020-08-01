@@ -13,6 +13,7 @@ import android.os.Bundle;
 import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -66,17 +67,79 @@ public class SelectionCategoriesFragment extends Fragment {
     }
 
     private void retrieveFiles() {
-        final Repository repository = new Repository(getContext(), extra);
-        switch (extra) {
+        Thread thread=new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-                case AppConstants.Apps: {
-                progressBar.setVisibility(View.VISIBLE);
-                Thread thread = new Thread(new Runnable() {
 
-                    @Override
-                    public void run() {
+                switch (extra) {
 
-                        sendDataToAdapter(repository.getAppList());
+                    case AppConstants.Apps: {
+                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Apps))
+                                .get(MyViewModel.class);
+                        progressBar.setVisibility(View.VISIBLE);
+
+
+                               sendDataToAdapter(myViewModel.getAppList());
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.GONE);
+                                    }
+                                });
+
+
+
+
+                    }
+                    break;
+
+
+                    case AppConstants.Audios: {
+
+                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Audios))
+                                .get(MyViewModel.class);
+
+                                sendDataToAdapter(myViewModel.getAudioList());
+
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.GONE);
+                                    }
+                                });
+
+                    }
+
+                    break;
+
+
+                    case AppConstants.Videos: {
+
+                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Videos))
+                                .get(MyViewModel.class);
+
+                                sendDataToAdapter(myViewModel.getVideoList());
+
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.GONE);
+                                    }
+                                });
+
+
+                    }
+
+                    break;
+
+
+                    case AppConstants.Files: {
+
+                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Files))
+                                .get(MyViewModel.class);
+                        sendDataToAdapter(myViewModel.getFileList());
+
                         progressBar.post(new Runnable() {
                             @Override
                             public void run() {
@@ -85,131 +148,67 @@ public class SelectionCategoriesFragment extends Fragment {
                         });
 
                     }
-                });
-                thread.start();
+                    break;
+                    case AppConstants.Images: {
+                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Images))
+                                .get(MyViewModel.class);
+
+                                sendDataToAdapter(myViewModel.getImageList());
+
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.GONE);
+                                    }
+                                });
+                            }
 
 
-            }
-            break;
 
 
-            case AppConstants.Audios: {
-
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            sendDataToAdapter(repository.getAudioList());
-
-                            progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                    });
-                    thread.start();
+                    break;
                 }
 
-            break;
 
+                getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
 
-            case AppConstants.Videos: {
+                        handleBackstack(listStackFiles);
 
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            sendDataToAdapter(repository.getVideoList());
-
-                            progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                    });
-                    thread.start();
-
-                }
-
-            break;
-
-
-            case AppConstants.Files: {
-
-
-                    sendDataToAdapter(repository.getFileList());
-
-                    progressBar.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setVisibility(View.GONE);
-                        }
-                    });
-
-            }
-            break;
-            case AppConstants.Images: {
-
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendDataToAdapter(repository.getImageList());
-
-                            progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                    });
-                    thread.start();
-
-
-            }
-            break;
-        }
-
-
-        getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-
-                handleBackstack(listStackFiles);
-
-            }
-
-            private void handleBackstack(Stack<PathModel> listStackFiles) {
-                Log.d("backpressed", String.valueOf(listStackFiles.size()));
-
-                if (listStackFiles.size() != 0) {
-                    modelList.remove(listStackFiles.pop());
-
-                    if (!listStackFiles.isEmpty()) {
-                        if (listStackFiles.size() == 1) {
-                            Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
-
-                        }
-                        PathModel pathModel = listStackFiles.peek();
-                        selectionAdapter.submitList(pathModel.getList());
-                        pathAdapter.submitList(modelList);
-                    } else {
-                        setEnabled(false);
-                        if (getActivity() != null)
-                            getActivity().onBackPressed();
                     }
-                }
-                if (listStackFiles.size() == 0) {
-                    setEnabled(false);
-                    if (getActivity() != null)
-                        getActivity().onBackPressed();
-                }
+
+                    private void handleBackstack(Stack<PathModel> listStackFiles) {
+                        Log.d("backpressed", String.valueOf(listStackFiles.size()));
+
+                        if (listStackFiles.size() != 0) {
+                            modelList.remove(listStackFiles.pop());
+
+                            if (!listStackFiles.isEmpty()) {
+                                if (listStackFiles.size() == 1) {
+                                    Toast.makeText(getContext(), "press back again to exit", Toast.LENGTH_SHORT).show();
+
+                                }
+                                PathModel pathModel = listStackFiles.peek();
+                                selectionAdapter.submitList(pathModel.getList());
+                                pathAdapter.submitList(modelList);
+                            } else {
+                                setEnabled(false);
+                                if (getActivity() != null)
+                                    getActivity().onBackPressed();
+                            }
+                        }
+                        if (listStackFiles.size() == 0) {
+                            setEnabled(false);
+                            if (getActivity() != null)
+                                getActivity().onBackPressed();
+                        }
+                    }
+                });
             }
         });
+        thread.start();
+
     }
 
 

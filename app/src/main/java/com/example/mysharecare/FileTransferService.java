@@ -119,8 +119,8 @@ public class FileTransferService extends Service {
                 fileProgressFragment.wifiP2pManager.clearServiceRequests(fileProgressFragment.channel, null);
                 fileProgressFragment.wifiP2pManager.clearLocalServices(fileProgressFragment.channel, null);
                 fileProgressFragment.wifiP2pManager.removeGroup(fileProgressFragment.channel, null);
-
-                fileProgressFragment.getActivity().getApplicationContext().unbindService(fileProgressFragment.serviceConnection);
+                if (fileProgressFragment.getActivity() != null)
+                    fileProgressFragment.getActivity().getApplicationContext().unbindService(fileProgressFragment.serviceConnection);
                 fileProgressFragment.getActivity().stopService(fileProgressFragment.intent);
             }
         });
@@ -163,7 +163,6 @@ public class FileTransferService extends Service {
     }
 
 
-
     public void setServiceArguments(List<ModelClass> modelClassList, Socket socket
             , boolean isReceiver, FileProgressFragment serviceCallback) {
 
@@ -197,14 +196,11 @@ public class FileTransferService extends Service {
 
         }
         // // / / / / // / / / / / / // / / / / / /// / / / / / // / / / / // / / / / / // / / // / / / //  / / / / /
-
-
         else {
             initializeReceiving();
 
         }
     }
-
 
 
     private void initializeReceiving() {
@@ -311,7 +307,7 @@ public class FileTransferService extends Service {
             for (int i1 = 0; i1 < modelClassList.size(); i1++) {
 
                 ModelClass modelClass = modelClassList.get(i1);
-                if (modelClass.getType().equals("app") || modelClass.getType().equals("others")) {
+                if (modelClass.getType().equals(AppConstants.Apps) || modelClass.getType().equals(AppConstants.Files)) {
                     uri = Uri.parse(modelClass.getUri());
                     dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
 

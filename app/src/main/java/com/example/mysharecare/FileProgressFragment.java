@@ -44,7 +44,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class FileProgressFragment extends Fragment  {
+public class FileProgressFragment extends Fragment {
 
 
     List<ModelClass> modelClassList;
@@ -70,12 +70,12 @@ public class FileProgressFragment extends Fragment  {
     Intent intent;
 
     public FileProgressFragment(List<ModelClass> modelClassList, Socket socket, Boolean isReceiver, WifiP2pManager.Channel channel
-    ,WifiP2pManager wifiP2pManager) {
+            , WifiP2pManager wifiP2pManager) {
         this.modelClassList = modelClassList;
         this.socket = socket;
         this.isReceiver = isReceiver;
-        this.channel=channel;
-        this.wifiP2pManager=wifiP2pManager;
+        this.channel = channel;
+        this.wifiP2pManager = wifiP2pManager;
     }
 
 
@@ -94,7 +94,8 @@ public class FileProgressFragment extends Fragment  {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId()==android.R.id.home){
+        if (item.getItemId() == android.R.id.home) {
+            Log.d("homeclicked", "yes");
             try {
                 fileTransferService.closeConnections();
             } catch (IOException e) {
@@ -107,18 +108,18 @@ public class FileProgressFragment extends Fragment  {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
-        ((AppCompatActivity)(getActivity())).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ((AppCompatActivity)(getActivity())).getSupportActionBar().setDisplayShowTitleEnabled(false);
+        ((AppCompatActivity) (getActivity())).setSupportActionBar(toolbar);
+        ((AppCompatActivity) (getActivity())).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ((AppCompatActivity) (getActivity())).getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
-      serviceConnection = new ServiceConnection() {
+        serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
                 FileTransferService.LocalBinder localBinder = (FileTransferService.LocalBinder) iBinder;
                 fileTransferService = localBinder.getService();
-                Log.d("connected","yess");
-                fileTransferService.setServiceArguments(modelClassList,socket,isReceiver,FileProgressFragment.this);
+                Log.d("connected", "yess");
+                fileTransferService.setServiceArguments(modelClassList, socket, isReceiver, FileProgressFragment.this);
 
             }
 
@@ -127,7 +128,7 @@ public class FileProgressFragment extends Fragment  {
 
             }
         };
-         intent = new Intent(getContext(), FileTransferService.class);
+        intent = new Intent(getContext(), FileTransferService.class);
         intent.setAction("start");
         if (getActivity() != null) {
             getActivity().startService(intent);
@@ -142,18 +143,17 @@ public class FileProgressFragment extends Fragment  {
                              Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.fragment_file_progress, container, false);
-
+        setHasOptionsMenu(true);
         initializeViews(v);
 
-        if(isReceiver){
+        if (isReceiver) {
             sendingHeadingTextView.setText("Files Received :");
-        }
-        else  sendingHeadingTextView.setText("Files sent :");
+        } else sendingHeadingTextView.setText("Files sent :");
 
         cancelTransferButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(fileTransferService!=null){
+                if (fileTransferService != null) {
                     try {
                         fileTransferService.closeConnections();
 
@@ -180,23 +180,12 @@ public class FileProgressFragment extends Fragment  {
         timeRemainingTextview = v.findViewById(R.id.timeremailingsextview);
         filesSendReceivedTextview = v.findViewById(R.id.sentfilestextview);
         sendingHeadingTextView = v.findViewById(R.id.sendingextview);
-        cancelTransferButton=v.findViewById(R.id.canceltransferbutton);
-        toolbar=v.findViewById(R.id.fileprogressfragmenttoolbar);
+        cancelTransferButton = v.findViewById(R.id.canceltransferbutton);
+        toolbar = v.findViewById(R.id.fileprogressfragmenttoolbar);
         progressBar.setMax(totalFilesSize);
 
 
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
 }
