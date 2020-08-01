@@ -36,9 +36,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 
+import static com.example.mysharecare.Utils.getBitmapFromDrawable;
+import static com.example.mysharecare.Utils.getBytesFromBitmap;
+
 public class SelectionCategoriesFragment extends Fragment {
     String extra;
-    List<ModelClass> modelClassList = new ArrayList<>();
     SelectionAdapter selectionAdapter;
     SelectItemsToSendFragment selectItemsToSendFragment;
     RecyclerView recyclerview;
@@ -64,93 +66,40 @@ public class SelectionCategoriesFragment extends Fragment {
     }
 
     private void retrieveFiles() {
-
+        final Repository repository = new Repository(getContext(), extra);
         switch (extra) {
-            case AppConstants.Apps: {
-                if (modelClassList.size() == 0) {
 
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setVisibility(View.VISIBLE);
+                case AppConstants.Apps: {
+                progressBar.setVisibility(View.VISIBLE);
+                Thread thread = new Thread(new Runnable() {
 
-                            List<ApplicationInfo> applicationInfoList = getActivity().getPackageManager().getInstalledApplications(0);
-                            for (final ApplicationInfo resolveInfo : applicationInfoList) {
-                                if ((resolveInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-                                    continue;
-                                }
-                                final ModelClass modelClass = new ModelClass();
-                                Log.d("position", resolveInfo.packageName);
-                                String s = resolveInfo.publicSourceDir;
-                                if (getActivity() != null)
-                                    modelClass.setName(resolveInfo.loadLabel(getActivity().getPackageManager()).toString());
-                                Thread thread1 = new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (getActivity() != null)
-                                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(resolveInfo.loadIcon(getActivity().getPackageManager()))));
+                    @Override
+                    public void run() {
 
-                                    }
-                                });
-                                thread1.start();
-                                modelClass.setUri(s);
-                                modelClass.setType(extra);
-                                modelClass.setSize(new File(resolveInfo.publicSourceDir).length());
-                                modelClassList.add(modelClass);
+                        sendDataToAdapter(repository.getAppList());
+                        progressBar.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.setVisibility(View.GONE);
                             }
-                            sendDataToAdapter();
-                            progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                    });
-                    thread.start();
-                }
+                        });
+
+                    }
+                });
+                thread.start();
+
+
             }
             break;
 
 
             case AppConstants.Audios: {
-                if (modelClassList.size() == 0) {
+
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            String[] projection = new String[]{MediaStore.Audio.Media._ID,
-                                    MediaStore.Audio.Media.DISPLAY_NAME,
-                                    MediaStore.Audio.Media.SIZE,
-                                    MediaStore.Audio.Media.DATA
-                            };
-                            Log.d("positiona", "inaudio");
-                            Cursor cursor = getActivity().getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                                    projection, null, null, null
-                            );
-                            Log.d("positiona", String.valueOf(cursor.getCount()));
-                            int id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-                            int name = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-                            int size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
-                            int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-                            cursor.moveToFirst();
-                            while (cursor.moveToNext()) {
-                                Log.d("positiona", "audio");
-                                ModelClass modelClass = new ModelClass();
-                                Long idd = cursor.getLong(id);
-                                String displayname = cursor.getString(name);
-                                Long sizee = (long) cursor.getInt(size);
-                                String dataa = cursor.getString(data);
-                                Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, idd);
-                                modelClass.setName(displayname);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                    modelClass.setUri(uri.toString());
-                                } else modelClass.setUri(dataa);
-                                modelClass.setType(extra);
-                                modelClass.setId(idd);
-                                modelClass.setSize(sizee);
-                                modelClassList.add(modelClass);
-                            }
-                            sendDataToAdapter();
+
+                            sendDataToAdapter(repository.getAudioList());
 
                             progressBar.post(new Runnable() {
                                 @Override
@@ -162,48 +111,17 @@ public class SelectionCategoriesFragment extends Fragment {
                     });
                     thread.start();
                 }
-            }
+
             break;
 
 
             case AppConstants.Videos: {
-                if (modelClassList.size() == 0) {
+
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            String[] projection = new String[]{MediaStore.Video.Media._ID,
-                                    MediaStore.Video.Media.DISPLAY_NAME,
-                                    MediaStore.Video.Media.SIZE,
-                                    MediaStore.Video.Media.DATA
-                            };
-                            Log.d("positionv", "invideo");
-                            Cursor cursor = getContext().getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                    projection, null, null, null
-                            );
-                            Log.d("positionv", String.valueOf(cursor.getCount()));
-                            int id = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-                            int name = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-                            int size = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
-                            int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-                            cursor.moveToFirst();
-                            while (cursor.moveToNext()) {
-                                Log.d("positionv", "video");
-                                ModelClass modelClass = new ModelClass();
-                                Long idd = cursor.getLong(id);
-                                String displayname = cursor.getString(name);
-                                Long sizee = (long) cursor.getInt(size);
-                                String dataa = cursor.getString(data);
-                                Uri uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, idd);
-                                modelClass.setName(displayname);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                    modelClass.setUri(uri.toString());
-                                } else modelClass.setUri(dataa);
-                                modelClass.setSize(sizee);
-                                modelClass.setType(extra);
-                                modelClass.setId(idd);
-                                modelClassList.add(modelClass);
-                            }
-                            sendDataToAdapter();
+
+                            sendDataToAdapter(repository.getVideoList());
 
                             progressBar.post(new Runnable() {
                                 @Override
@@ -216,34 +134,14 @@ public class SelectionCategoriesFragment extends Fragment {
                     thread.start();
 
                 }
-            }
+
             break;
 
 
             case AppConstants.Files: {
-                if (modelClassList.size() == 0) {
-                    File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-                    Log.d("filecontents", "s");
-                    File[] s = file.listFiles();
-                    for (File g : s) {
-                        ModelClass modelClass = new ModelClass();
-                        modelClass.setName(g.getName());
-                        modelClass.setUri(g.getAbsolutePath());
-                        modelClass.setSize(g.length());
-                        if (!g.isFile()) {
-                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
-                                    .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
-                            modelClass.setType(AppConstants.Directory);
-                        } else {
-                            modelClass.setBytes(getBytesFromBitmap(getBitmapFromDrawable(getActivity().getResources()
-                                    .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
-                            modelClass.setType(AppConstants.Files);
 
-                        }
-                        modelClassList.add(modelClass);
 
-                    }
-                    sendDataToAdapter();
+                    sendDataToAdapter(repository.getFileList());
 
                     progressBar.post(new Runnable() {
                         @Override
@@ -251,66 +149,15 @@ public class SelectionCategoriesFragment extends Fragment {
                             progressBar.setVisibility(View.GONE);
                         }
                     });
-                }
+
             }
             break;
             case AppConstants.Images: {
-                if (modelClassList.size() == 0) {
+
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            String[] projection = new String[]{MediaStore.Images.Media._ID,
-                                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-                                    MediaStore.Images.Media._ID,
-                                    MediaStore.Images.Media.BUCKET_ID
-                                    , MediaStore.Images.Media.DATA
-
-                            };
-
-                            Cursor cursor = getContext().getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                    projection, null, null, MediaStore.Images.Media.DATE_ADDED + " DESC"
-                            );
-
-
-                            int id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-                            int name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
-                            int bucketId = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
-                            int data = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-
-                            List<String> bucketNameList = new ArrayList<>();
-
-
-                            cursor.moveToFirst();
-                            while (cursor.moveToNext()) {
-
-
-                                final ModelClass modelClass = new ModelClass();
-                                Long idd = cursor.getLong(id);
-                                String displayname = cursor.getString(name);
-                                String bucketIdd = cursor.getString(bucketId);
-                                String dataa = cursor.getString(data);
-
-                                if (!bucketNameList.contains(bucketIdd)) {
-                                    bucketNameList.add(bucketIdd);
-
-                                    final Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, idd);
-
-                                    modelClass.setName(displayname);
-
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                        modelClass.setUri(uri.toString());
-                                    } else modelClass.setUri(dataa);
-
-                                    modelClass.setType(AppConstants.Albums);
-
-                                    modelClass.setId(idd);
-                                    modelClass.setBucketId(bucketIdd);
-                                    modelClassList.add(modelClass);
-
-
-                                }
-                            }
-                            sendDataToAdapter();
+                            sendDataToAdapter(repository.getImageList());
 
                             progressBar.post(new Runnable() {
                                 @Override
@@ -322,7 +169,7 @@ public class SelectionCategoriesFragment extends Fragment {
                     });
                     thread.start();
 
-                }
+
             }
             break;
         }
@@ -331,8 +178,6 @@ public class SelectionCategoriesFragment extends Fragment {
         getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                //  Log.d("positionextraa", String.valueOf(i));
-
 
                 handleBackstack(listStackFiles);
 
@@ -351,7 +196,6 @@ public class SelectionCategoriesFragment extends Fragment {
                         }
                         PathModel pathModel = listStackFiles.peek();
                         selectionAdapter.submitList(pathModel.getList());
-                        //modelList.remove(pathModel);
                         pathAdapter.submitList(modelList);
                     } else {
                         setEnabled(false);
@@ -366,34 +210,6 @@ public class SelectionCategoriesFragment extends Fragment {
                 }
             }
         });
-    }
-
-    private Bitmap getBitmapFromDrawable(Drawable drawable) {
-        int width = drawable.getIntrinsicWidth();
-        width = width > 0 ? width : 1;
-        int height = drawable.getIntrinsicHeight();
-        height = height > 0 ? height : 1;
-
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
-    }
-
-    private byte[] getBytesFromBitmap(Bitmap bitmap) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        bitmap.recycle();
-        byte[] bytes = byteArrayOutputStream.toByteArray();
-        try {
-            byteArrayOutputStream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return bytes;
-
     }
 
 
@@ -430,13 +246,13 @@ public class SelectionCategoriesFragment extends Fragment {
 
     }
 
-    private void sendDataToAdapter() {
+    private void sendDataToAdapter(final List<ModelClass> modelClassList) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (modelClassList.size() > 0) {
                     if (extra.equals(AppConstants.Files)) {
-                        sortList();
+                        sortList(modelClassList);
                         Collections.sort(modelClassList, new Comparator<ModelClass>() {
                             @Override
                             public int compare(ModelClass modelClass, ModelClass t1) {
@@ -445,7 +261,7 @@ public class SelectionCategoriesFragment extends Fragment {
                         });
 
                     } else if (!extra.equals(AppConstants.Images))
-                        sortList();
+                        sortList(modelClassList);
 
                     if (extra.equals(AppConstants.Files) || extra.equals(AppConstants.Images)) {
                         PathModel pathModel = new PathModel(modelClassList, "Home");
@@ -462,7 +278,7 @@ public class SelectionCategoriesFragment extends Fragment {
     }
 
 
-    private void sortList() {
+    private void sortList(List<ModelClass> modelClassList) {
         Collections.sort(modelClassList, new Comparator<ModelClass>() {
             @Override
             public int compare(ModelClass modelClass, ModelClass t1) {

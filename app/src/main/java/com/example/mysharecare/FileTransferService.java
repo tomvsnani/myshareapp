@@ -124,6 +124,7 @@ public class FileTransferService extends Service {
                 fileProgressFragment.getActivity().stopService(fileProgressFragment.intent);
             }
         });
+
         builder.setNegativeButton("No ", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -160,6 +161,8 @@ public class FileTransferService extends Service {
             return FileTransferService.this;
         }
     }
+
+
 
     public void setServiceArguments(List<ModelClass> modelClassList, Socket socket
             , boolean isReceiver, FileProgressFragment serviceCallback) {
@@ -201,6 +204,8 @@ public class FileTransferService extends Service {
 
         }
     }
+
+
 
     private void initializeReceiving() {
         try {
