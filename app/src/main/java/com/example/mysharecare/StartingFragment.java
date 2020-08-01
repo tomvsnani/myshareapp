@@ -45,6 +45,7 @@ public class StartingFragment extends Fragment {
                 getActivity().getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.startcontainer, new SelectItemsToSendFragment())
+                        .addToBackStack(null)
                         .commit();
             }
         });

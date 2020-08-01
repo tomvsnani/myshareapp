@@ -43,7 +43,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     String type;
     SelectionCategoriesFragment selectionCategoriesFragment;
     MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
-    static List<Integer> selectedList = new ArrayList<>();
+    List<Integer> selectedList = new ArrayList<>();
     String path = "";
 
     protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type) {
@@ -93,7 +93,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
             holder.linearLayout.setBackground(context.getResources().getDrawable(R.drawable.buttonshape));
 
         } else {
-            holder.linearLayout.setBackgroundColor(Color.TRANSPARENT);
+            holder.linearLayout.setBackground(null);
         }
 
         holder.sizeTextView.setText(String.format("%.1f Mb", (double) (modelClass.getSize()) / 1000000));
