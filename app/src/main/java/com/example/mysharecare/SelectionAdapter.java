@@ -43,27 +43,29 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     String type;
     SelectionCategoriesFragment selectionCategoriesFragment;
     MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
-    List<Integer> selectedList = new ArrayList<>();
+    List<Integer> selectedList ;
     String path = "";
+    MyViewModel myViewModel;
 
-    protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type) {
+    protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type, final MyViewModel myViewModel) {
         super(modelClassItemCallback);
         this.selectionCategoriesFragment = context;
         this.context = context.getContext();
         this.selectedItemsInterface = selectedItemsInterface;
         this.type = type;
+        this.myViewModel=myViewModel;
 
 
         selectedPosition.observeForever(new Observer<Integer>() {
             @Override
             public void onChanged(Integer integer) {
                 Log.d("integer",""+integer);
-                if (!selectedList.contains(integer)) {
-                    selectedList.add(integer);
+                if (!myViewModel.getSelectedItems().contains(integer)) {
+                   myViewModel.getSelectedItems().add(integer);
                     selectedItemsInterface.SelectedItemsCallback(getCurrentList().get(integer), true);
 
                 } else {
-                    selectedList.remove(integer);
+                    myViewModel.getSelectedItems().remove(integer);
                     selectedItemsInterface.SelectedItemsCallback(getCurrentList().get(integer), false);
                 }
 
@@ -88,7 +90,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
         holder.nametextview.setText(modelClass.getName());
 
-        if (selectedList.contains(position) && !(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
+        if (myViewModel.getSelectedItems().contains(position) && !(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
 
             holder.linearLayout.setBackground(context.getResources().getDrawable(R.drawable.buttonshape));
 
@@ -181,101 +183,102 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
             linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
-                    Log.d("enteredd", modelClass.getUri());
-                    if (type.equals(AppConstants.Files)) {
+                    if(getAdapterPosition()!=RecyclerView.NO_POSITION) {
+                        final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
+                        Log.d("enteredd", modelClass.getUri());
+                        if (type.equals(AppConstants.Files)) {
 
-                        File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
-                        if (file.isDirectory()) {
-                            List<ModelClass> modelClassList = new ArrayList<>();
-                            File[] files = file.listFiles();
-                            for (File g : files) {
-                                ModelClass modelClassInner = new ModelClass();
-                                modelClassInner.setName(g.getName());
-                                modelClassInner.setUri(g.getAbsolutePath());
-                                modelClassInner.setSize(g.length());
-                                Log.d("filesize", String.valueOf(g.length()));
-                                if (!g.isFile()) {
-                                    modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
-                                            .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
-                                    modelClassInner.setType(AppConstants.Directory);
-                                } else {
-                                    modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
-                                            .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
-                                    modelClassInner.setType(AppConstants.Files);
-
+                            File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
+                            if (file.isDirectory()) {
+                                List<ModelClass> modelClassList = new ArrayList<>();
+                                File[] files = file.listFiles();
+                                for (File g : files) {
+                                    ModelClass modelClassInner = new ModelClass();
+                                    modelClassInner.setName(g.getName());
+                                    modelClassInner.setUri(g.getAbsolutePath());
+                                    modelClassInner.setSize(g.length());
                                     Log.d("filesize", String.valueOf(g.length()));
-                                }
+                                    if (!g.isFile()) {
+                                        modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
+                                                .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
+                                        modelClassInner.setType(AppConstants.Directory);
+                                    } else {
+                                        modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
+                                                .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
+                                        modelClassInner.setType(AppConstants.Files);
 
-                                modelClassList.add(modelClassInner);
+                                        Log.d("filesize", String.valueOf(g.length()));
+                                    }
 
-                            }
-                            PathModel pathModel = new PathModel(modelClassList, modelClass.getName());
-                            selectionCategoriesFragment.modelList.add(pathModel);
-                            submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
-                        } else {
-                            Log.d("filesize", String.valueOf(file.length()));
+                                    modelClassList.add(modelClassInner);
 
-                            selectedPosition.setValue(getAdapterPosition());
-
-                        }
-
-                    } else if (modelClass.getType().equals(AppConstants.Albums)) {
-
-                        final ArrayList<ModelClass> modelClassList = new ArrayList<>();
-                        //  final List<PathModel> pathModelList=selectionCategoriesFragment.modelList;
-
-
-                        Thread thread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String[] projection = new String[]{MediaStore.Images.Media._ID,
-                                        MediaStore.Images.Media.DISPLAY_NAME,
-                                        MediaStore.Images.Media.SIZE,
-                                        MediaStore.Images.Media.DATA
-                                };
-
-                                Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                        projection, MediaStore.Images.ImageColumns.BUCKET_ID + " =? ", new String[]{modelClass.getBucketId()},
-                                        MediaStore.Images.Media.DATE_TAKEN + " DESC"
-                                );
-
-                                int id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-                                int name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
-                                int size = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
-
-
-                                while (cursor.moveToNext()) {
-                                    ModelClass modelClass = new ModelClass();
-                                    Long idd = cursor.getLong(id);
-                                    String displayname = cursor.getString(name);
-                                    Long sizee = (long) cursor.getInt(size);
-                                    String urii = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-                                    Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, idd);
-                                    modelClass.setName(displayname);
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                        modelClass.setUri(uri.toString());
-                                    } else
-                                        modelClass.setUri(urii);
-                                    modelClass.setSize(sizee);
-                                    modelClass.setType(AppConstants.Images);
-                                    modelClass.setId(idd);
-                                    modelClassList.add(modelClass);
                                 }
                                 PathModel pathModel = new PathModel(modelClassList, modelClass.getName());
                                 selectionCategoriesFragment.modelList.add(pathModel);
                                 submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
+                            } else {
+                                Log.d("filesize", String.valueOf(file.length()));
+
+                                selectedPosition.setValue(getAdapterPosition());
 
                             }
-                        });
-                        thread.start();
 
-                    } else {
+                        } else if (modelClass.getType().equals(AppConstants.Albums)) {
 
-                        selectedPosition.setValue(getAdapterPosition());
+                            final ArrayList<ModelClass> modelClassList = new ArrayList<>();
+                            //  final List<PathModel> pathModelList=selectionCategoriesFragment.modelList;
 
+
+                            Thread thread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String[] projection = new String[]{MediaStore.Images.Media._ID,
+                                            MediaStore.Images.Media.DISPLAY_NAME,
+                                            MediaStore.Images.Media.SIZE,
+                                            MediaStore.Images.Media.DATA
+                                    };
+
+                                    Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                            projection, MediaStore.Images.ImageColumns.BUCKET_ID + " =? ", new String[]{modelClass.getBucketId()},
+                                            MediaStore.Images.Media.DATE_TAKEN + " DESC"
+                                    );
+
+                                    int id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                                    int name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
+                                    int size = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
+
+
+                                    while (cursor.moveToNext()) {
+                                        ModelClass modelClass = new ModelClass();
+                                        Long idd = cursor.getLong(id);
+                                        String displayname = cursor.getString(name);
+                                        Long sizee = (long) cursor.getInt(size);
+                                        String urii = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+                                        Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, idd);
+                                        modelClass.setName(displayname);
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            modelClass.setUri(uri.toString());
+                                        } else
+                                            modelClass.setUri(urii);
+                                        modelClass.setSize(sizee);
+                                        modelClass.setType(AppConstants.Images);
+                                        modelClass.setId(idd);
+                                        modelClassList.add(modelClass);
+                                    }
+                                    PathModel pathModel = new PathModel(modelClassList, modelClass.getName());
+                                    selectionCategoriesFragment.modelList.add(pathModel);
+                                    submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
+
+                                }
+                            });
+                            thread.start();
+
+                        } else {
+
+                            selectedPosition.setValue(getAdapterPosition());
+
+                        }
                     }
-
                 }
 
             });

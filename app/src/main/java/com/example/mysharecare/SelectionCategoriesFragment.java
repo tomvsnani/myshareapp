@@ -51,6 +51,8 @@ public class SelectionCategoriesFragment extends Fragment {
     Toolbar toolbar;
     DisplayPathAdapter pathAdapter;
     List<PathModel> modelList = new ArrayList<>();
+    List<Integer> selectedList;
+    MyViewModel myViewModel;
 
     public SelectionCategoriesFragment(String extra, SelectItemsToSendFragment fragment) {
         this.extra = extra;
@@ -67,28 +69,25 @@ public class SelectionCategoriesFragment extends Fragment {
     }
 
     private void retrieveFiles() {
-        Thread thread=new Thread(new Runnable() {
+
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
 
-
+               getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.VISIBLE);
+                    }
+                });
                 switch (extra) {
 
                     case AppConstants.Apps: {
-                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Apps))
-                                .get(MyViewModel.class);
-                        progressBar.setVisibility(View.VISIBLE);
 
 
-                               sendDataToAdapter(myViewModel.getAppList());
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.GONE);
-                                    }
-                                });
 
 
+                        sendDataToAdapter(myViewModel.getAppList());
 
 
                     }
@@ -97,17 +96,9 @@ public class SelectionCategoriesFragment extends Fragment {
 
                     case AppConstants.Audios: {
 
-                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Audios))
-                                .get(MyViewModel.class);
 
-                                sendDataToAdapter(myViewModel.getAudioList());
+                        sendDataToAdapter(myViewModel.getAudioList());
 
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.GONE);
-                                    }
-                                });
 
                     }
 
@@ -116,17 +107,8 @@ public class SelectionCategoriesFragment extends Fragment {
 
                     case AppConstants.Videos: {
 
-                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Videos))
-                                .get(MyViewModel.class);
 
-                                sendDataToAdapter(myViewModel.getVideoList());
-
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.GONE);
-                                    }
-                                });
+                        sendDataToAdapter(myViewModel.getVideoList());
 
 
                     }
@@ -136,40 +118,30 @@ public class SelectionCategoriesFragment extends Fragment {
 
                     case AppConstants.Files: {
 
-                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Files))
-                                .get(MyViewModel.class);
+
                         sendDataToAdapter(myViewModel.getFileList());
 
-                        progressBar.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setVisibility(View.GONE);
-                            }
-                        });
 
                     }
                     break;
                     case AppConstants.Images: {
-                        final MyViewModel myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(),AppConstants.Images))
-                                .get(MyViewModel.class);
-
-                                sendDataToAdapter(myViewModel.getImageList());
-
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.GONE);
-                                    }
-                                });
-                            }
 
 
+                        sendDataToAdapter(myViewModel.getImageList());
+
+
+                    }
 
 
                     break;
                 }
 
-
+                progressBar.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
                 getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
                     @Override
                     public void handleOnBackPressed() {
@@ -220,7 +192,9 @@ public class SelectionCategoriesFragment extends Fragment {
         recyclerview = v.findViewById(R.id.showpathrecyclerview);
         LinearLayoutManager staggeredGridLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(staggeredGridLayoutManager);
-        selectionAdapter = new SelectionAdapter(this, selectItemsToSendFragment, extra);
+        myViewModel = new ViewModelProvider(getActivity(), new MyViewModelFactory(getContext(), extra))
+                .get(MyViewModel.class);
+        selectionAdapter = new SelectionAdapter(this, selectItemsToSendFragment, extra,myViewModel);
         recyclerView.setAdapter(selectionAdapter);
         progressBar = v.findViewById(R.id.itemsloadingprogressbar);
         RecyclerView recyclerView1 = v.findViewById(R.id.showpathrecyclerview);

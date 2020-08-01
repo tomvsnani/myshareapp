@@ -35,17 +35,35 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
 
-        <Button
-            android:id="@+id/sendButton"
+        <androidx.cardview.widget.CardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            app:cardElevation="8dp">
 
-            android:text="SEND" />
+            <Button
+                android:id="@+id/sendButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="50dp"
+                android:background="@drawable/receivebuttondrawable"
+                android:text=" SEND  " />
+        </androidx.cardview.widget.CardView>
 
-        <Button
-            android:id="@+id/receiveButton"
+        <androidx.cardview.widget.CardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="receive" />
+            android:layout_margin="8dp"
+            app:cardElevation="8dp">
+
+            <Button
+                android:id="@+id/receiveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="50dp"
+                android:background="@drawable/sendbuttondrawable"
+                android:text="receive" />
+        </androidx.cardview.widget.CardView>
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -15,6 +15,16 @@ public class MyViewModel extends ViewModel {
     private List<ModelClass> modelClassListAudios ;
     private List<ModelClass> modelClassListImages ;
     private List<ModelClass> modelClassListFiles;
+
+    public List<Integer> getSelectedItems() {
+        return selectedItems;
+    }
+
+    public void setSelectedItems(List<Integer> selectedItems) {
+        this.selectedItems = selectedItems;
+    }
+
+    private List<Integer> selectedItems=new ArrayList<>();
     private Repository repository;
 
     public MyViewModel(Context context, String extra) {
@@ -53,4 +63,6 @@ public class MyViewModel extends ViewModel {
         return modelClassListFiles;
         else return modelClassListFiles = repository.getFileList();
     }
+
+
 }
