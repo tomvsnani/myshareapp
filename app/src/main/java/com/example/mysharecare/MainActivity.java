@@ -70,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         mainFragment = new MainFragment(isReceiver, modelClassList);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.filetransferprogressframelayout, mainFragment)
-                .addToBackStack(null)
                 .commit();
     }
 

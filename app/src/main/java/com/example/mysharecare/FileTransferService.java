@@ -53,7 +53,7 @@ public class FileTransferService extends Service {
     DataOutputStream dataOutputStream;
     ObjectOutputStream objectOutputStream;
     DataInputStream dataInputStream = null;
-    int fileNumberToClose=-5;
+    int fileNumberToClose = -5;
 
 
     @Nullable
@@ -194,197 +194,30 @@ public class FileTransferService extends Service {
     private void startFileTransfer() {
         calculateRemainingTime();
         if (!isReceiver) {
-            initializeSending();
 
-        }
-        // // / / / / // / / / / / / // / / / / / /// / / / / / // / / / / // / / / / / // / / // / / / //  / / / / /
-        else {
-            initializeReceiving();
-
-        }
-    }
-
-
-    private void initializeReceiving() {
-        try {
-
-            dataInputStreamReceiver = new DataInputStream(socket.getInputStream());
-            objectInputStreamReceiver = new ObjectInputStream(socket.getInputStream());
-            fileOutputStreamReceiver = null;
-            modelClassList = (List<ModelClass>) objectInputStreamReceiver.readObject();
-            if (modelClassList != null) {
-                if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
-                    fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            fileProgressFragment.sendingFilesAdapter.submitList(modelClassList);
-                        }
-                    });
-                int numOfFiles = modelClassList.size();
-                totalFilesSize = dataInputStreamReceiver.readInt();
-                fileProgressFragment.progressBar.setMax(totalFilesSize);
-                remainingFilesCounter = numOfFiles;
-                final Long startTime = System.currentTimeMillis();
-
-
-                for (int i = 0; i < numOfFiles; i++) {
-                    Log.d("receivingfiles", String.valueOf(i));
-                    ModelClass modelClass = modelClassList.get(i);
-                    File file = null;
-                    String name = modelClass.getName();
-                    if (modelClass.getType().equals(AppConstants.Apps)) {
-                        file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name + ".apk");
-                    } else
-                        file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
-
-                    file.createNewFile();
-                    fileOutputStreamReceiver = new FileOutputStream(file);
-                    int j = 0;
-                    int size = modelClass.getSize().intValue();
-
-                    int eachFileSize = 0;
-                    byte[] b = new byte[61440];
-                    updateFilesSentReceivedViews();
-                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) > 0) {
-
-
-                        Log.d("utff", String.valueOf(j));
-                            size = size - j;
-                            fileSizeSent += j;
-                            eachFileSize += j;
-                            if (fileProgressFragment != null)
-                                fileProgressFragment.progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        fileProgressFragment.progressBar.setProgress(fileSizeSent);
-                                    }
-                                });
-                            final int finalEachFileSize = eachFileSize;
-                            final int finalI = i;
-                            if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
-                                fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSize);
-                                    }
-                                });
-
-                            fileOutputStreamReceiver.write(b, 0, j);
-
-                    }
-                    Log.d("receiving", "cameout");
-                    filesSentCounter++;
-                    updateFilesSentReceivedViews();
-                }
-
-                calculateTimeElapsed(startTime);
-                timer.cancel();
-
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private void initializeSending() {
-        try {
-            dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-            objectOutputStream.writeObject(modelClassList);
-            dataOutputStream.writeInt(totalFilesSize);
-            Uri uri = null;
-            dataInputStream = null;
-
-            remainingFilesCounter = modelClassList.size();
-            if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
-                fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        fileProgressFragment.sendingFilesAdapter.submitList(modelClassList);
-                    }
-                });
-
-            final Long startTime = System.currentTimeMillis();
-            for (int i1 = 0; i1 < modelClassList.size(); i1++) {
-
-                ModelClass modelClass = modelClassList.get(i1);
-
-
-
-                if (modelClass.getType().equals(AppConstants.Apps) || modelClass.getType().equals(AppConstants.Files)) {
-                    uri = Uri.parse(modelClass.getUri());
-                    dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
-
-
-                } else {
-                    uri = Uri.parse(modelClass.getUri());
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-
-                        dataInputStream = new DataInputStream(this.getContentResolver().openInputStream(uri));
-                    } else
-                        dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
-
-
-                }
-
-                int filesize = modelClass.getSize().intValue();
-
-                byte[] bytes = new byte[61440];
-
-                int i;
-
-                int eachFileSizeSent = 0;
-                Log.d("sendingpackets", String.valueOf(i1));
-                updateFilesSentReceivedViews();
-
-                    while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
-                        Log.d("sendingpackets", String.valueOf(i1) + " while");
-
-
-                        filesize = filesize - i;
-                        fileSizeSent += i;
-                        eachFileSizeSent += i;
-                        dataOutputStream.write(bytes, 0, i);
-
-
-                        final int finalI = i1;
-                        final int finalEachFileSizeSent = eachFileSizeSent;
-                        if (fileProgressFragment != null)
-                            fileProgressFragment.progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fileProgressFragment.progressBar.setProgress(fileSizeSent);
-
-                                }
-                            });
-                        if (fileProgressFragment != null && fileProgressFragment.getActivity() != null) {
-                            fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSizeSent);
-                                }
-                            });
-
-                        }
-                    }
-                    filesSentCounter++;
-
-                    updateFilesSentReceivedViews();
-
-
+            try {
+                dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
+            Sender sender = new Sender(this);
+            sender.initializeSending();
+            dataInputStream=sender.dataInputStream;
 
-            calculateTimeElapsed(startTime);
-            timer.cancel();
-            //closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        } else {
+            try {
+                dataInputStreamReceiver = new DataInputStream(socket.getInputStream());
+                objectInputStreamReceiver = new ObjectInputStream(socket.getInputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Receiver receiver = new Receiver(this);
+            receiver.initializeReceiving();
+            fileOutputStreamReceiver=receiver.fileOutputStreamReceiver;
+
         }
     }
 
