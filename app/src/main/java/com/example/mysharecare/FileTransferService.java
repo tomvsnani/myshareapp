@@ -17,6 +17,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.Observer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -52,6 +53,7 @@ public class FileTransferService extends Service {
     DataOutputStream dataOutputStream;
     ObjectOutputStream objectOutputStream;
     DataInputStream dataInputStream = null;
+    int fileNumberToClose=-5;
 
 
     @Nullable
@@ -226,11 +228,11 @@ public class FileTransferService extends Service {
 
 
                 for (int i = 0; i < numOfFiles; i++) {
-                    Log.d("receivingfiles", "yes");
+                    Log.d("receivingfiles", String.valueOf(i));
                     ModelClass modelClass = modelClassList.get(i);
                     File file = null;
                     String name = modelClass.getName();
-                    if (modelClass.getType().equals("app")) {
+                    if (modelClass.getType().equals(AppConstants.Apps)) {
                         file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name + ".apk");
                     } else
                         file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name);
@@ -243,31 +245,46 @@ public class FileTransferService extends Service {
                     int eachFileSize = 0;
                     byte[] b = new byte[61440];
                     updateFilesSentReceivedViews();
-                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) > 0) {
-                        Log.d("receivingpackets", "yesinwhile");
-                        size = size - j;
-                        fileSizeSent += j;
-                        eachFileSize += j;
-                        if (fileProgressFragment != null)
-                            fileProgressFragment.progressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fileProgressFragment.progressBar.setProgress(fileSizeSent);
-                                }
-                            });
-                        final int finalEachFileSize = eachFileSize;
-                        final int finalI = i;
-                        if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
-                            fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSize);
-                                }
-                            });
+                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) >= 0) {
+                        if (j != 0) {
 
-                        fileOutputStreamReceiver.write(b, 0, j);
+                            Log.d("utff", String.valueOf(j));
+                            size = size - j;
+                            fileSizeSent += j;
+                            eachFileSize += j;
+                            if (fileProgressFragment != null)
+                                fileProgressFragment.progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        fileProgressFragment.progressBar.setProgress(fileSizeSent);
+                                    }
+                                });
+                            final int finalEachFileSize = eachFileSize;
+                            final int finalI = i;
+                            if (fileProgressFragment != null && fileProgressFragment.getActivity() != null)
+                                fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSize);
+                                    }
+                                });
+
+                            fileOutputStreamReceiver.write(b, 0, j);
+                        } else {
+                            // dataInputStreamReceiver.readFully(b);
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            String g = dataInputStreamReceiver.readUTF();
+                            break;
+                            //  Log.d("utff", String.valueOf(g));
+
+
+                        }
                     }
-
+                    Log.d("receiving", "cameout");
                     filesSentCounter++;
                     updateFilesSentReceivedViews();
                 }
@@ -307,6 +324,25 @@ public class FileTransferService extends Service {
             for (int i1 = 0; i1 < modelClassList.size(); i1++) {
 
                 ModelClass modelClass = modelClassList.get(i1);
+
+
+                final int finalI1 = i1;
+                fileProgressFragment.sendingFilesAdapter.connectionCloseLiveData.observeForever(new Observer<String>() {
+                    @Override
+                    public void onChanged(String s) {
+                        String[] strings=s.split(",");
+                        fileNumberToClose= Integer.parseInt(strings[1]);
+                        if(finalI1 ==fileNumberToClose){
+                            try {
+                                dataOutputStream.writeUTF(AppConstants.FILE_CANCELLED+","+ finalI1);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
+                    }
+                });
                 if (modelClass.getType().equals(AppConstants.Apps) || modelClass.getType().equals(AppConstants.Files)) {
                     uri = Uri.parse(modelClass.getUri());
                     dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
@@ -331,54 +367,60 @@ public class FileTransferService extends Service {
                 int i;
 
                 int eachFileSizeSent = 0;
-                Log.d("sendingpackets", "yes");
+                Log.d("sendingpackets", String.valueOf(i1));
                 updateFilesSentReceivedViews();
-
-                while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
-                    Log.d("sendingpackets", "yesinwhile");
-
-                    if (fileProgressFragment != null)
-                        fileProgressFragment.sendingHeadingTextView.post(new Runnable() {
-                            @Override
-                            public void run() {
+                if (i1 != 1) {
+                    while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
+                        Log.d("sendingpackets", String.valueOf(i1) + " while");
 
 
-                            }
-                        });
-                    filesize = filesize - i;
-                    fileSizeSent += i;
-                    eachFileSizeSent += i;
-                    dataOutputStream.write(bytes, 0, i);
-                    final int finalI = i1;
-                    final int finalEachFileSizeSent = eachFileSizeSent;
-                    if (fileProgressFragment != null)
-                        fileProgressFragment.progressBar.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                fileProgressFragment.progressBar.setProgress(fileSizeSent);
+                        filesize = filesize - i;
+                        fileSizeSent += i;
+                        eachFileSizeSent += i;
+                        dataOutputStream.write(bytes, 0, i);
 
-                            }
-                        });
-                    if (fileProgressFragment != null && fileProgressFragment.getActivity() != null) {
-                        fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSizeSent);
-                            }
-                        });
 
+                        final int finalI = i1;
+                        final int finalEachFileSizeSent = eachFileSizeSent;
+                        if (fileProgressFragment != null)
+                            fileProgressFragment.progressBar.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    fileProgressFragment.progressBar.setProgress(fileSizeSent);
+
+                                }
+                            });
+                        if (fileProgressFragment != null && fileProgressFragment.getActivity() != null) {
+                            fileProgressFragment.getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    fileProgressFragment.sendingFilesAdapter.setProgress(finalI, finalEachFileSizeSent);
+                                }
+                            });
+
+                        }
                     }
+                    filesSentCounter++;
+
+                    updateFilesSentReceivedViews();
+
+                } else {
+                    //     dataOutputStream.flush();
+                    Thread.sleep(2000);
+
+                    dataOutputStream.writeUTF("close");
+
+
                 }
-                filesSentCounter++;
-
-                updateFilesSentReceivedViews();
-
             }
+
 
             calculateTimeElapsed(startTime);
             timer.cancel();
             //closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,6 +33,7 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
     PackageManager packageManager;
     PackageInfo packageInfo;
     HashMap<Integer, Integer> progressValue = new HashMap<Integer, Integer>();
+    MutableLiveData<String> connectionCloseLiveData=new MutableLiveData<>();
 
 
     protected SendingFilesAdapter(Context context) {
@@ -113,6 +115,7 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
         TextView sizeCountTextview;
         ImageView iconimageview;
         ProgressBar progressBar;
+        TextView openCloseTextview;
 
 
         public SendingFilesViewHolder(@NonNull View itemView) {
@@ -121,6 +124,14 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
             iconimageview = itemView.findViewById(R.id.filetransferimageview);
             sizeCountTextview = itemView.findViewById(R.id.showfileprogressscounttextview);
             progressBar = itemView.findViewById(R.id.eachfileprogressbar);
+            openCloseTextview=itemView.findViewById(R.id.filetransferopenclosetextview);
+
+            openCloseTextview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    connectionCloseLiveData.setValue(AppConstants.FILE_CANCELLED+","+getAdapterPosition());
+                }
+            });
         }
     }
 

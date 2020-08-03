@@ -12,4 +12,6 @@ public class AppConstants {
     public static final String Albums = "Albums";
     public static final String Directory = "dir";
     public static final String SEND_MODEL_LIST_EXTRA ="sendextra";
+    public static final String CONNECTION_CLOSED="connectionclose,0";
+    public static  String FILE_CANCELLED="filecancel";
 }

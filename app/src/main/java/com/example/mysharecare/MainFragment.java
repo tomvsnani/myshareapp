@@ -64,7 +64,7 @@ import static android.content.Context.WIFI_P2P_SERVICE;
 public class MainFragment extends Fragment {
     WifiP2pManager wifiP2pManager;
     WifiP2pManager.Channel channel;
-   MyBroadcastReceivers wifiBroadCast;
+    MyBroadcastReceivers wifiBroadCast;
     RecyclerView devicesListView;
     WifiP2pManager.ActionListener connectDisconnectActionListener;
     Boolean isReceiver;
@@ -81,6 +81,8 @@ public class MainFragment extends Fragment {
     TextView findDevicesTextview;
     TextView showConnectMessageTextView;
     Button searchForDevicesButton;
+    Button wifiTurnOnButton;
+    Button locationTurnOnButton;
 
     public MainFragment(boolean isReceiver, List<ModelClass> modelClassList) {
         this.isReceiver = isReceiver;
@@ -108,14 +110,12 @@ public class MainFragment extends Fragment {
         showConnectMessageTextView = v.findViewById(R.id.showconnectmessageTextview);
         toolbar = v.findViewById(R.id.mainactivitytoolbar);
 
-        if(isReceiver)
+        if (isReceiver)
             showConnectMessageTextView.setText("Please wait until the connection Request is made .");
         else showConnectMessageTextView.setText("Please wait until the device is discovered .");
 
         return v;
     }
-
-
 
 
     @Override
@@ -127,26 +127,6 @@ public class MainFragment extends Fragment {
         wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         locationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
 
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Toast.makeText(getContext(), "Please allow Location Permissions", Toast.LENGTH_LONG).show();
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-
-        } else {
-            if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                showAlertDialog();
-            } else {
-                deletePersistentGroups();
-
-                setupListeners();
-            }
-        }
 
     }
 
@@ -174,7 +154,7 @@ public class MainFragment extends Fragment {
 
             map.put("name", Settings.Global.getString(getActivity().getContentResolver(), "device_name"));
 
-        } else map.put("name", Build.BRAND + " " + Build.MODEL + " " + Build.PRODUCT);
+        } else map.put("name", Build.DEVICE + " " + Build.MODEL + " " + Build.PRODUCT);
 
         WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("_test", "_presence._tcp"
                 , map);
@@ -191,11 +171,10 @@ public class MainFragment extends Fragment {
             public void onSuccess() {
 
 
-
             }
 
             @Override
-            public void onFailure(int i){
+            public void onFailure(int i) {
             }
         });
     }
@@ -283,10 +262,6 @@ public class MainFragment extends Fragment {
 
 
     /////// Broadcast Receiver ////////////
-
-
-
-
 
 
     private void setupListeners() {
@@ -392,6 +367,41 @@ public class MainFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Toast.makeText(getContext(), "Please allow Location Permissions", Toast.LENGTH_LONG).show();
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            }
+
+        } else {
+            if (!wifiManager.isWifiEnabled() || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                showAlertDialog();
+            } else {
+                if (alertDialog != null) {
+                    if (wifiManager.isWifiEnabled())
+
+                        wifiTurnedOnSetting(wifiTurnOnButton);
+                    else wifiTurnOffsetting(wifiTurnOnButton);
+                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                        locationTurnedOnsetting(locationTurnOnButton);
+                    else locationTunedOffSetting(locationTurnOnButton);
+
+                    if (wifiManager.isWifiEnabled() && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                        deletePersistentGroups();
+
+                        setupListeners();
+
+                        alertDialog.dismiss();
+                    }
+                }
+            }
+        }
+
 
         IntentFilter intentFilter = new IntentFilter();
 
@@ -413,7 +423,7 @@ public class MainFragment extends Fragment {
         intentFilter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
 
 
-        wifiBroadCast = new MyBroadcastReceivers(wifiP2pManager,channel,MainFragment.this);
+        wifiBroadCast = new MyBroadcastReceivers(wifiP2pManager, channel, MainFragment.this);
 
         getActivity().registerReceiver(wifiBroadCast, intentFilter);
 
@@ -425,8 +435,8 @@ public class MainFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View v = getLayoutInflater().inflate(R.layout.wifilocationtuenonlayout, null);
         builder.setView(v);
-        final Button wifiTurnOnButton = v.findViewById(R.id.turnonwifibutton);
-        final Button locationTurnOnButton = v.findViewById(R.id.turnonlocationbutton);
+        wifiTurnOnButton = v.findViewById(R.id.turnonwifibutton);
+        locationTurnOnButton = v.findViewById(R.id.turnonlocationbutton);
         final LinearLayout wifiLinearLayout = v.findViewById(R.id.wifilinearlayout);
         final LinearLayout locationLinearLayout = v.findViewById(R.id.locationlinearlayout);
         builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
@@ -448,24 +458,24 @@ public class MainFragment extends Fragment {
         alertDialog.setCancelable(false);
         alertDialog.show();
 
-        isLocationChanged.observe(this, new Observer<Boolean>() {
+        isLocationChanged.observeForever(new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 if (alertDialog != null) {
 
                     if (aBoolean) {
-                        locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+                        locationTurnedOnsetting(locationTurnOnButton);
                     } else {
 
                         locationLinearLayout.setVisibility(View.VISIBLE);
-                        locationTunedOffSetting(locationTurnOnButton, locationLinearLayout);
+                        locationTunedOffSetting(locationTurnOnButton);
                     }
 
                 }
             }
         });
 
-        isWifiChanged.observe(this, new Observer<Boolean>() {
+        isWifiChanged.observeForever(new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 if (alertDialog != null) {
@@ -516,9 +526,9 @@ public class MainFragment extends Fragment {
         }
 
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+            locationTurnedOnsetting(locationTurnOnButton);
         } else {
-            locationTunedOffSetting(locationTurnOnButton, locationLinearLayout);
+            locationTunedOffSetting(locationTurnOnButton);
         }
 
 
@@ -526,7 +536,7 @@ public class MainFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if (turnOnLOcation(locationManager))
-                    locationTurnedOnsetting(locationTurnOnButton, locationLinearLayout);
+                    locationTurnedOnsetting(locationTurnOnButton);
             }
         });
 
@@ -545,14 +555,14 @@ public class MainFragment extends Fragment {
         wifiTurnOnButton.setClickable(false);
     }
 
-    private void locationTunedOffSetting(Button locationTurnOnButton, LinearLayout locationLinearLayout) {
+    private void locationTunedOffSetting(Button locationTurnOnButton) {
         setButtonColor(locationTurnOnButton, R.color.errorColor, R.drawable.buttondrawableerror);
         locationTurnOnButton.setText("Turn On");
         //  locationLinearLayout.setVisibility(View.VISIBLE);
         locationTurnOnButton.setClickable(true);
     }
 
-    private void locationTurnedOnsetting(Button locationTurnOnButton, LinearLayout locationLinearLayout) {
+    private void locationTurnedOnsetting(Button locationTurnOnButton) {
         setButtonColor(locationTurnOnButton, R.color.colorPrimary, R.drawable.buttonshape);
         locationTurnOnButton.setText("Turned On");
         // locationLinearLayout.setVisibility(View.GONE);
