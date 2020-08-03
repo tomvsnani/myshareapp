@@ -326,23 +326,7 @@ public class FileTransferService extends Service {
                 ModelClass modelClass = modelClassList.get(i1);
 
 
-                final int finalI1 = i1;
-                fileProgressFragment.sendingFilesAdapter.connectionCloseLiveData.observeForever(new Observer<String>() {
-                    @Override
-                    public void onChanged(String s) {
-                        String[] strings=s.split(",");
-                        fileNumberToClose= Integer.parseInt(strings[1]);
-                        if(finalI1 ==fileNumberToClose){
-                            try {
-                                dataOutputStream.writeUTF(AppConstants.FILE_CANCELLED+","+ finalI1);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
 
-                        }
-
-                    }
-                });
                 if (modelClass.getType().equals(AppConstants.Apps) || modelClass.getType().equals(AppConstants.Files)) {
                     uri = Uri.parse(modelClass.getUri());
                     dataInputStream = new DataInputStream(new FileInputStream(new File(uri.toString())));
