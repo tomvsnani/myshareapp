@@ -447,10 +447,6 @@ public class MainFragment extends Fragment {
                     deletePersistentGroups();
 
                     setupListeners();
-                } else {
-                    locationLinearLayout.setVisibility(View.VISIBLE);
-                    wifiLinearLayout.setVisibility(View.VISIBLE);
-                    showAlertDialog();
                 }
             }
         });
@@ -458,7 +454,7 @@ public class MainFragment extends Fragment {
         alertDialog.setCancelable(false);
         alertDialog.show();
 
-        isLocationChanged.observeForever(new Observer<Boolean>() {
+        isLocationChanged.observe(getViewLifecycleOwner(),new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 if (alertDialog != null) {
@@ -475,7 +471,7 @@ public class MainFragment extends Fragment {
             }
         });
 
-        isWifiChanged.observeForever(new Observer<Boolean>() {
+        isWifiChanged.observe(getViewLifecycleOwner(),new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 if (alertDialog != null) {

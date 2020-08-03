@@ -245,10 +245,10 @@ public class FileTransferService extends Service {
                     int eachFileSize = 0;
                     byte[] b = new byte[61440];
                     updateFilesSentReceivedViews();
-                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) >= 0) {
-                        if (j != 0) {
+                    while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) > 0) {
 
-                            Log.d("utff", String.valueOf(j));
+
+                        Log.d("utff", String.valueOf(j));
                             size = size - j;
                             fileSizeSent += j;
                             eachFileSize += j;
@@ -270,19 +270,7 @@ public class FileTransferService extends Service {
                                 });
 
                             fileOutputStreamReceiver.write(b, 0, j);
-                        } else {
-                            // dataInputStreamReceiver.readFully(b);
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            String g = dataInputStreamReceiver.readUTF();
-                            break;
-                            //  Log.d("utff", String.valueOf(g));
 
-
-                        }
                     }
                     Log.d("receiving", "cameout");
                     filesSentCounter++;
@@ -353,7 +341,7 @@ public class FileTransferService extends Service {
                 int eachFileSizeSent = 0;
                 Log.d("sendingpackets", String.valueOf(i1));
                 updateFilesSentReceivedViews();
-                if (i1 != 1) {
+
                     while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
                         Log.d("sendingpackets", String.valueOf(i1) + " while");
 
@@ -388,14 +376,7 @@ public class FileTransferService extends Service {
 
                     updateFilesSentReceivedViews();
 
-                } else {
-                    //     dataOutputStream.flush();
-                    Thread.sleep(2000);
 
-                    dataOutputStream.writeUTF("close");
-
-
-                }
             }
 
 
@@ -403,8 +384,6 @@ public class FileTransferService extends Service {
             timer.cancel();
             //closeAllConnectionsSender(dataOutputStream, objectOutputStream, dataInputStream);
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

@@ -153,16 +153,17 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
                                 try {
                                     ServerSocket serverSocket = new ServerSocket(5000);
                                     final Socket socket = serverSocket.accept();
+
 //                                    Log.d("socketconn", String.valueOf(socket.isConnected()));
 //                                    ServerSocket serverSocket1 = new ServerSocket(5000);
 //                                    Socket socket1 = serverSocket1.accept();
 //                                    Log.d("socketconn1", String.valueOf(socket1.isConnected()));
 //                                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
 
-                                  //  dataOutputStream.writeUTF("hello");
-                                        mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
-                                                replace(R.id.filetransferprogressframelayout,
-                                                        new FileProgressFragment(mainFragment.modelClassList, socket, mainFragment.isReceiver, channel, wifiP2pManager)).addToBackStack(null).commit();
+                                    //  dataOutputStream.writeUTF("hello");
+                                    mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
+                                            replace(R.id.filetransferprogressframelayout,
+                                                    new FileProgressFragment(mainFragment.modelClassList, socket, mainFragment.isReceiver, channel, wifiP2pManager)).addToBackStack(null).commit();
 
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -177,6 +178,10 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
 
                                     Socket socket = new Socket();
                                     socket.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
+                                    DataInputStream dataInputStream1 = new DataInputStream(socket.getInputStream());
+                                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+
+//
 //                                    Log.d("socketconn", String.valueOf(socket.isConnected()));
 //                                    Socket socket1 = new Socket();
 //                                    socket1.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
@@ -187,9 +192,9 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
 //                                    Log.d("socket1", "fromsocket1 " + dataInputStream1.readUTF());
 //                                    Log.d("socket", "fromsocket " + dataInputStream.readUTF());
 
-                                        mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
-                                                replace(R.id.filetransferprogressframelayout,
-                                                        new FileProgressFragment(mainFragment.modelClassList, socket, mainFragment.isReceiver, channel, wifiP2pManager)).addToBackStack(null).commit();
+                                    mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
+                                            replace(R.id.filetransferprogressframelayout,
+                                                    new FileProgressFragment(mainFragment.modelClassList, socket, mainFragment.isReceiver, channel, wifiP2pManager)).addToBackStack(null).commit();
 
 
                                 } catch (IOException e) {

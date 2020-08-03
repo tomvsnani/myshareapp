@@ -129,7 +129,7 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
             openCloseTextview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    connectionCloseLiveData.setValue(AppConstants.FILE_CANCELLED+","+getAdapterPosition());
+                  //  connectionCloseLiveData.setValue(AppConstants.FILE_CANCELLED+","+getAdapterPosition());
                 }
             });
         }
