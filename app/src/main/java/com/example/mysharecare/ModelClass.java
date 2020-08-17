@@ -14,6 +14,16 @@ public class ModelClass implements Serializable {
     private byte[] bytes;
     private String bucketId="";
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    private boolean selected;
+
     public String getBucketId() {
         return bucketId;
     }

@@ -92,18 +92,18 @@ public class Repository {
                 MediaStore.Video.Media.SIZE,
                 MediaStore.Video.Media.DATA
         };
-        Log.d("positionv", "invideo");
+
         Cursor cursor = context.getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, null
         );
-        Log.d("positionv", String.valueOf(cursor.getCount()));
+
         int id = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
         int name = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
         int size = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
         int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
         cursor.moveToFirst();
         while (cursor.moveToNext()) {
-            Log.d("positionv", "video");
+
             ModelClass modelClass = new ModelClass();
             Long idd = cursor.getLong(id);
             String displayname = cursor.getString(name);
@@ -128,18 +128,18 @@ public class Repository {
                 MediaStore.Audio.Media.SIZE,
                 MediaStore.Audio.Media.DATA
         };
-        Log.d("positiona", "inaudio");
+
         Cursor cursor = context.getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, null
         );
-        Log.d("positiona", String.valueOf(cursor.getCount()));
+
         int id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
         int name = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
         int size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
         int data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
         cursor.moveToFirst();
         while (cursor.moveToNext()) {
-            Log.d("positiona", "audio");
+
             ModelClass modelClass = new ModelClass();
             Long idd = cursor.getLong(id);
             String displayname = cursor.getString(name);
@@ -166,7 +166,7 @@ public class Repository {
                 continue;
             }
             final ModelClass modelClass = new ModelClass();
-            Log.d("position", resolveInfo.packageName);
+
             String s = resolveInfo.publicSourceDir;
             if (context != null)
                 modelClass.setName(resolveInfo.loadLabel(context.getPackageManager()).toString());
@@ -191,7 +191,7 @@ public class Repository {
 
     public List<ModelClass> getFileList() {
         File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-        Log.d("filecontents", "s");
+
         File[] s = file.listFiles();
         for (File g : s) {
             ModelClass modelClass = new ModelClass();

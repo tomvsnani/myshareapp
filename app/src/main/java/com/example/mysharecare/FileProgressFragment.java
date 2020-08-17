@@ -95,7 +95,7 @@ public class FileProgressFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            Log.d("homeclicked", "yes");
+
             try {
                 fileTransferService.closeConnections();
             } catch (IOException e) {
@@ -118,7 +118,7 @@ public class FileProgressFragment extends Fragment {
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
                 FileTransferService.LocalBinder localBinder = (FileTransferService.LocalBinder) iBinder;
                 fileTransferService = localBinder.getService();
-                Log.d("connected", "yess");
+
                 fileTransferService.setServiceArguments(modelClassList, socket, isReceiver, FileProgressFragment.this);
 
             }

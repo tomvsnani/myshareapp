@@ -58,7 +58,7 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
         this.channel = channel;
         this.actionListene = actionListene;
         submitList(listModels);
-        Log.d("adaptersize", String.valueOf(getCurrentList().size()));
+
     }
 
     @Override
@@ -99,7 +99,7 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
         wifiP2pConfig.deviceAddress = wifiP2pDevice.deviceAddress;
         wifiP2pConfig.groupOwnerIntent = 15;
         wifiP2pConfig.wps.setup = WpsInfo.PBC;
-        Log.d("deviceadap","yess");
+
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -110,8 +110,7 @@ public class DevicesAdapter extends ListAdapter<WifiP2pDevice, DevicesAdapter.De
 
     @Override
     public int getItemCount() {
-        Log.d("adaptersizee", "one");
-        Log.d("adaptersizee", String.valueOf(getCurrentList().size()));
+
         return Math.max(0, getCurrentList().size());
     }
 

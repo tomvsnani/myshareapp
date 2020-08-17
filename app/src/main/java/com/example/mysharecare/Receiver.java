@@ -52,7 +52,7 @@ public class Receiver {
 
 
                 for (int i = 0; i < numOfFiles; i++) {
-                    Log.d("receivingfiles", String.valueOf(i));
+
                     ModelClass modelClass = fileTransferService.modelClassList.get(i);
                     File file = null;
                     String name = modelClass.getName();
@@ -72,7 +72,7 @@ public class Receiver {
                     while ((j = dataInputStreamReceiver.read(b, 0, Math.min(b.length, size))) > 0) {
 
 
-                        Log.d("utff", String.valueOf(j));
+
                         size = size - j;
                         fileTransferService.fileSizeSent += j;
                         eachFileSize += j;
@@ -96,7 +96,7 @@ public class Receiver {
                         fileOutputStreamReceiver.write(b, 0, j);
 
                     }
-                    Log.d("receiving", "cameout");
+
                     fileTransferService.filesSentCounter++;
                     fileTransferService.updateFilesSentReceivedViews();
                 }

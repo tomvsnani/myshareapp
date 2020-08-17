@@ -42,9 +42,8 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
     SelectedItemsInterface selectedItemsInterface;
     String type;
     SelectionCategoriesFragment selectionCategoriesFragment;
-    MutableLiveData<Integer> selectedPosition = new MutableLiveData<>();
-    List<Integer> selectedList ;
-    String path = "";
+    MutableLiveData<ModelClass> selectedPosition = new MutableLiveData<>();
+
     MyViewModel myViewModel;
 
     protected SelectionAdapter(SelectionCategoriesFragment context, final SelectedItemsInterface selectedItemsInterface, String type, final MyViewModel myViewModel) {
@@ -53,23 +52,29 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
         this.context = context.getContext();
         this.selectedItemsInterface = selectedItemsInterface;
         this.type = type;
-        this.myViewModel=myViewModel;
+        this.myViewModel = myViewModel;
 
 
-        selectedPosition.observeForever(new Observer<Integer>() {
+        selectedPosition.observeForever(new Observer<ModelClass>() {
             @Override
-            public void onChanged(Integer integer) {
-                Log.d("integer",""+integer);
+            public void onChanged(ModelClass integer) {
+
+                List<ModelClass> list = new ArrayList<>(getCurrentList());
+                int position = list.indexOf(integer);
+                list.remove(position);
+                integer.setSelected(true);
+                list.add(position, integer);
+
                 if (!myViewModel.getSelectedItems().contains(integer)) {
-                   myViewModel.getSelectedItems().add(integer);
-                    selectedItemsInterface.SelectedItemsCallback(getCurrentList().get(integer), true);
+                    myViewModel.getSelectedItems().add(integer);
+                    selectedItemsInterface.SelectedItemsCallback(integer, true);
 
                 } else {
                     myViewModel.getSelectedItems().remove(integer);
-                    selectedItemsInterface.SelectedItemsCallback(getCurrentList().get(integer), false);
+                    selectedItemsInterface.SelectedItemsCallback(integer, false);
                 }
 
-                notifyItemChanged(integer);
+                notifyItemChanged(position);
             }
         });
     }
@@ -90,7 +95,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
         holder.nametextview.setText(modelClass.getName());
 
-        if (myViewModel.getSelectedItems().contains(position) && !(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
+        if (myViewModel.getSelectedItems().contains(modelClass) && !(modelClass.getType().equals(AppConstants.Directory) || modelClass.getType().equals(AppConstants.Albums))) {
 
             holder.linearLayout.setBackground(context.getResources().getDrawable(R.drawable.buttonshape));
 
@@ -183,9 +188,9 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
             linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(getAdapterPosition()!=RecyclerView.NO_POSITION) {
+                    if (getAdapterPosition() != RecyclerView.NO_POSITION) {
                         final ModelClass modelClass = getCurrentList().get(getAdapterPosition());
-                        Log.d("enteredd", modelClass.getUri());
+
                         if (type.equals(AppConstants.Files)) {
 
                             File file = new File(getCurrentList().get(getAdapterPosition()).getUri());
@@ -197,7 +202,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                     modelClassInner.setName(g.getName());
                                     modelClassInner.setUri(g.getAbsolutePath());
                                     modelClassInner.setSize(g.length());
-                                    Log.d("filesize", String.valueOf(g.length()));
+
                                     if (!g.isFile()) {
                                         modelClassInner.setBytes(getBytesFromBitmap(getBitmapFromDrawable(context.getResources()
                                                 .getDrawable(R.drawable.ic_baseline_movie_filter_24))));
@@ -207,7 +212,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                                 .getDrawable(R.drawable.ic_baseline_filter_vintage_24))));
                                         modelClassInner.setType(AppConstants.Files);
 
-                                        Log.d("filesize", String.valueOf(g.length()));
+
                                     }
 
                                     modelClassList.add(modelClassInner);
@@ -217,9 +222,9 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
                                 selectionCategoriesFragment.modelList.add(pathModel);
                                 submit(pathModel, selectionCategoriesFragment.modelList, modelClassList);
                             } else {
-                                Log.d("filesize", String.valueOf(file.length()));
 
-                                selectedPosition.setValue(getAdapterPosition());
+
+                                selectedPosition.setValue(getCurrentList().get(getAdapterPosition()));
 
                             }
 
@@ -275,7 +280,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
                         } else {
 
-                            selectedPosition.setValue(getAdapterPosition());
+                            selectedPosition.setValue(getCurrentList().get(getAdapterPosition()));
 
                         }
                     }
@@ -332,7 +337,7 @@ public class SelectionAdapter extends ListAdapter<ModelClass, SelectionAdapter.S
 
     @Override
     public int getItemCount() {
-        Log.d("positionsize", String.valueOf(getCurrentList().size()));
+
         return Math.max(0, getCurrentList().size());
     }
 

@@ -65,7 +65,7 @@ public class FileTransferService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction() != null && intent.getAction().equals("stop")) {
-            Log.d("stop received", "yess");
+
             getApplicationContext().unbindService(fileProgressFragment.serviceConnection);
             stopForeground(true);
             stopSelf();
@@ -223,10 +223,10 @@ public class FileTransferService extends Service {
 
 
     void calculateTimeElapsed(Long startTime) {
-        Log.d("okay", "time");
+
         final Long stoptime = System.currentTimeMillis();
         final double time = (((double) (stoptime - startTime) / ((double) (1000 * 60))));
-        Log.d("okay", String.format("%.2f", time));
+
     }
 
 

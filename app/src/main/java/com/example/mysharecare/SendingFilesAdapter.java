@@ -115,7 +115,7 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
         TextView sizeCountTextview;
         ImageView iconimageview;
         ProgressBar progressBar;
-        TextView openCloseTextview;
+
 
 
         public SendingFilesViewHolder(@NonNull View itemView) {
@@ -124,14 +124,8 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
             iconimageview = itemView.findViewById(R.id.filetransferimageview);
             sizeCountTextview = itemView.findViewById(R.id.showfileprogressscounttextview);
             progressBar = itemView.findViewById(R.id.eachfileprogressbar);
-            openCloseTextview=itemView.findViewById(R.id.filetransferopenclosetextview);
 
-            openCloseTextview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                  //  connectionCloseLiveData.setValue(AppConstants.FILE_CANCELLED+","+getAdapterPosition());
-                }
-            });
+
         }
     }
 
@@ -147,14 +141,14 @@ public class SendingFilesAdapter extends ListAdapter<ModelClass, SendingFilesAda
         this.progressForFileBeingSent = progressForFileBeingSent;
         progressValue.put(progressForFileBeingSent, progress);
         notifyItemChanged(progressForFileBeingSent);
-        Log.d("fileadapter", progressForFileBeingSent + " " + progress);
+
 
     }
 
 
     @Override
     public int getItemCount() {
-        Log.d("positionsize", String.valueOf(getCurrentList().size()));
+
         return Math.max(0, getCurrentList().size());
     }
 

@@ -16,15 +16,15 @@ public class MyViewModel extends ViewModel {
     private List<ModelClass> modelClassListImages ;
     private List<ModelClass> modelClassListFiles;
 
-    public List<Integer> getSelectedItems() {
+    public List<ModelClass> getSelectedItems() {
         return selectedItems;
     }
 
-    public void setSelectedItems(List<Integer> selectedItems) {
+    public void setSelectedItems(List<ModelClass> selectedItems) {
         this.selectedItems = selectedItems;
     }
 
-    private List<Integer> selectedItems=new ArrayList<>();
+    private List<ModelClass> selectedItems=new ArrayList<>();
     private Repository repository;
 
     public MyViewModel(Context context, String extra) {

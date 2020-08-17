@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#4D142451"
     android:orientation="vertical"
     tools:context=".StartActivity">
 
@@ -23,17 +24,40 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="16dp"
+            android:gravity="center"
+            android:text="Send Files with blazing speed "
+            android:textColor="#142451"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/startingLinearLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_gravity="center"
+        android:background="@drawable/starting_page_background_drawable"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.596"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
 
         <androidx.cardview.widget.CardView
             android:layout_width="wrap_content"
@@ -45,9 +69,12 @@
                 android:id="@+id/sendButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="#2A3C69"
+                android:foreground="?attr/selectableItemBackground"
+                style="?android:selectableItemBackground"
                 android:padding="50dp"
-                android:background="@drawable/receivebuttondrawable"
-                android:text=" SEND  " />
+                android:text=" SEND  "
+                android:textColor="#e0e0e0" />
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
@@ -60,10 +87,19 @@
                 android:id="@+id/receiveButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:foreground="?attr/selectableItemBackground"
+                android:background="#5078E1"
                 android:padding="50dp"
-                android:background="@drawable/sendbuttondrawable"
-                android:text="receive" />
+                android:text="receive"
+                android:textColor="#e0e0e0" />
         </androidx.cardview.widget.CardView>
 
     </LinearLayout>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="339dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

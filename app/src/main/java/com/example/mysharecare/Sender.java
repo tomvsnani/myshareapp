@@ -79,11 +79,11 @@ public class Sender {
                 int i;
 
                 int eachFileSizeSent = 0;
-                Log.d("sendingpackets", String.valueOf(i1));
+
                 fileTransferService.updateFilesSentReceivedViews();
 
                 while ((i = dataInputStream.read(bytes, 0, Math.min(bytes.length, filesize))) > 0) {
-                    Log.d("sendingpackets", String.valueOf(i1) + " while");
+
 
 
                     filesize = filesize - i;

@@ -151,7 +151,7 @@ public class SelectionCategoriesFragment extends Fragment {
                     }
 
                     private void handleBackstack(Stack<PathModel> listStackFiles) {
-                        Log.d("backpressed", String.valueOf(listStackFiles.size()));
+
 
                         if (listStackFiles.size() != 0) {
                             modelList.remove(listStackFiles.pop());
@@ -196,11 +196,13 @@ public class SelectionCategoriesFragment extends Fragment {
                 .get(MyViewModel.class);
         selectionAdapter = new SelectionAdapter(this, selectItemsToSendFragment, extra,myViewModel);
         recyclerView.setAdapter(selectionAdapter);
+        recyclerView.setItemAnimator(null);
         progressBar = v.findViewById(R.id.itemsloadingprogressbar);
-        RecyclerView recyclerView1 = v.findViewById(R.id.showpathrecyclerview);
-        recyclerView1.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        RecyclerView pathRecyclerView = v.findViewById(R.id.showpathrecyclerview);
+        pathRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         pathAdapter = new DisplayPathAdapter();
-        recyclerView1.setAdapter(pathAdapter);
+        pathRecyclerView.setAdapter(pathAdapter);
+
 
 
         if (extra.equals(AppConstants.Images) || extra.equals(AppConstants.Files)) {

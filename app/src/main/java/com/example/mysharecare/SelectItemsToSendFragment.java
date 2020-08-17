@@ -45,15 +45,15 @@ public class SelectItemsToSendFragment extends Fragment implements SelectionAdap
         sendButton = v.findViewById(R.id.sendtoActivitybutton);
         viewPager2 = v.findViewById(R.id.viewpager);
         tableLayout = v.findViewById(R.id.tablayout);
-        toolbar=v.findViewById(R.id.fargmenttosendfragmenttoolbar);
-        ((AppCompatActivity)(getActivity())).setSupportActionBar(toolbar);
+        toolbar = v.findViewById(R.id.fargmenttosendfragmenttoolbar);
+        ((AppCompatActivity) (getActivity())).setSupportActionBar(toolbar);
         selectedItemsCountButton = v.findViewById(R.id.selecteditemsbutton);
         viewPager2.setAdapter(new ViewPgaerAdapter(this));
 //
         new TabLayoutMediator(tableLayout, viewPager2, new TabLayoutMediator.TabConfigurationStrategy() {
             @Override
             public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-                Log.d("position", String.valueOf(position));
+
                 switch (position) {
 
                     case 0:

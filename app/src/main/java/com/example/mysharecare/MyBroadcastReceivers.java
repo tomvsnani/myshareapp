@@ -50,8 +50,6 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
                 case WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION:
 
 
-                    onStateChangedBroadcast(intent);
-
                     break;
 
 
@@ -119,17 +117,7 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
         } else mainFragment.isLocationChanged.setValue(false);
     }
 
-    private void onStateChangedBroadcast(Intent intent) {
-        int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
 
-        if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-
-
-        } else {
-
-
-        }
-    }
 
     private void onConnectionChangedBroadcast(Intent intent) {
         NetworkInfo networkInfo = (NetworkInfo) intent
@@ -148,19 +136,13 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
                         @Override
                         public void run() {
                             if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
-                                Log.d("sizeserve", "server");
+
 
                                 try {
                                     ServerSocket serverSocket = new ServerSocket(5000);
                                     final Socket socket = serverSocket.accept();
 
-//                                    Log.d("socketconn", String.valueOf(socket.isConnected()));
-//                                    ServerSocket serverSocket1 = new ServerSocket(5000);
-//                                    Socket socket1 = serverSocket1.accept();
-//                                    Log.d("socketconn1", String.valueOf(socket1.isConnected()));
-//                                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-
-                                    //  dataOutputStream.writeUTF("hello");
+//
                                     mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
                                             replace(R.id.filetransferprogressframelayout,
                                                     new FileProgressFragment(mainFragment.modelClassList, socket, mainFragment.isReceiver, channel, wifiP2pManager)).addToBackStack(null).commit();
@@ -174,23 +156,10 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
 
                             if (wifiP2pInfo.groupFormed && !wifiP2pInfo.isGroupOwner) {
                                 try {
-                                    Log.d("sizeserve", "client");
+
 
                                     Socket socket = new Socket();
                                     socket.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
-                                    DataInputStream dataInputStream1 = new DataInputStream(socket.getInputStream());
-                                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-
-//
-//                                    Log.d("socketconn", String.valueOf(socket.isConnected()));
-//                                    Socket socket1 = new Socket();
-//                                    socket1.connect(new InetSocketAddress(wifiP2pInfo.groupOwnerAddress.getHostAddress(), 5000), 5000);
-//                                    Log.d("socketconn", String.valueOf(socket1.isConnected()));
-//                                    DataInputStream dataInputStream1 = new DataInputStream(socket1.getInputStream());
-//                                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-//
-//                                    Log.d("socket1", "fromsocket1 " + dataInputStream1.readUTF());
-//                                    Log.d("socket", "fromsocket " + dataInputStream.readUTF());
 
                                     mainFragment.getActivity().getSupportFragmentManager().beginTransaction().
                                             replace(R.id.filetransferprogressframelayout,
@@ -208,8 +177,7 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
                 }
             });
         }
-        if (networkInfo != null && !networkInfo.isConnected()) {
-            mainFragment.findDevicesTextview.setText("Reconnecting");
+        if (networkInfo != null && !networkInfo.isConnected() ) {
             mainFragment.deletePersistentGroups();
             mainFragment.startDiscoveryDevices();
         }
@@ -226,7 +194,6 @@ public class MyBroadcastReceivers extends BroadcastReceiver {
 
             @Override
             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                Toast.makeText(context, "No device is found", Toast.LENGTH_SHORT).show();
                 if (wifiP2pDeviceList.getDeviceList().size() == 0)
                     mainFragment.devicesAdapter.submitList(null);
             }
